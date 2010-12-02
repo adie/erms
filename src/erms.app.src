@@ -1,0 +1,9 @@
+%% -*- erlang -*-
+{application, erms,
+ [{description, "erms"},
+  {vsn, "0.1"},
+  {modules, []},
+  {registered, []},
+  {mod, {'erms_app', []}},
+  {env, []},
+  {applications, [kernel, stdlib, crypto]}]}.
