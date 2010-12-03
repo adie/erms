@@ -44,7 +44,9 @@ init([]) ->
     Web = web_specs(erms_web, 8080),
     Srv = {erms_server, {erms_server, start, [erms_server]},
       permanent, brutal_kill, worker, [erms_server]},
-    Processes = [Web, Srv],
+    Core = {erms_core, {erms_core, start_link, []},
+      permanent, 5000, worker, [erms_core]},
+    Processes = [Web, Core, Srv],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.

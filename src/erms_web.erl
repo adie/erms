@@ -28,8 +28,7 @@ loop(Req, DocRoot) ->
         case Path of
           "/" ->
             Req:ok({"text/html", [], render(Path, DocRoot, [
-                    {users, erms_server:get_users(erms_server)},
-                    {messages, erms_server:get_all_msg(erms_server)}
+                    {messages, erms_core:get_all_msg()}
                   ])});
           _ ->
             Req:serve_file(Path, DocRoot)
