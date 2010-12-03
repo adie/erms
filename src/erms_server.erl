@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, start/1, stop/1, send/2, get_all_msg/1, get_users/1]).
+-export([start/1, stop/1, send/2, get_all_msg/1, get_users/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -23,9 +23,6 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_link() ->
-  gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
-
 start(Name) ->
   gen_server_cluster:start(Name, ?MODULE, [], []).
 
@@ -36,13 +33,7 @@ send(Name, Msg) ->
   gen_server:call({global, Name}, {send, {Name, node(), Msg}}).
 
 get_all_msg(Name) ->
-  io:format("All messages of ~p:~n", [Name]),
-  MsgList = gen_server:call({global, Name}, get_all_msg),
-  F = fun({Node, Msg}) ->
-      io:format("[~p]: ~p~n", [Node, Msg])
-  end,
-  lists:foreach(F, MsgList),
-  ok.
+  gen_server:call({global, Name}, get_all_msg).
 
 get_users(Name) ->
   {GlobalNode, LocalNodeList} = gen_server_cluster:get_all_server_nodes(Name),

@@ -11,48 +11,71 @@
 %% External API
 
 start(Options) ->
-    {DocRoot, Options1} = get_option(docroot, Options),
-    Loop = fun (Req) ->
-                   ?MODULE:loop(Req, DocRoot)
-           end,
-    mochiweb_http:start([{name, ?MODULE}, {loop, Loop} | Options1]).
+  {DocRoot, Options1} = get_option(docroot, Options),
+  Loop = fun (Req) ->
+      ?MODULE:loop(Req, DocRoot)
+  end,
+  mochiweb_http:start([{name, ?MODULE}, {loop, Loop} | Options1]).
 
 stop() ->
-    mochiweb_http:stop(?MODULE).
+  mochiweb_http:stop(?MODULE).
 
 loop(Req, DocRoot) ->
-    "/" ++ Path = Req:get(path),
-    try
-        case Req:get(method) of
-            Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-                case Path of
-                    _ ->
-                        Req:serve_file(Path, DocRoot)
-                end;
-            'POST' ->
-                case Path of
-                    _ ->
-                        Req:not_found()
-                end;
-            _ ->
-                Req:respond({501, [], []})
-        end
-    catch
-        Type:What ->
-            Report = ["web request failed",
-                      {path, Path},
-                      {type, Type}, {what, What},
-                      {trace, erlang:get_stacktrace()}],
-            error_logger:error_report(Report),
-            %% NOTE: mustache templates need \ because they are not awesome.
-            Req:respond({500, [{"Content-Type", "text/plain"}],
-                         "request failed, sorry\n"})
-    end.
+  Path = Req:get(path),
+  try
+    case Req:get(method) of
+      Method when Method =:= 'GET'; Method =:= 'HEAD' ->
+        case Path of
+          "/" ->
+            Req:ok({"text/html", [], render(Path, DocRoot, [
+                    {users, erms_server:get_users(erms_server)},
+                    {messages, erms_server:get_all_msg(erms_server)}
+                  ])});
+          _ ->
+            Req:serve_file(Path, DocRoot)
+        end;
+      'POST' ->
+        case Path of
+          _ ->
+            Req:not_found()
+        end;
+      _ ->
+        Req:respond({501, [], []})
+    end
+  catch
+    Type:What ->
+      Report = ["web request failed",
+        {path, Path},
+        {type, Type}, {what, What},
+        {trace, erlang:get_stacktrace()}],
+      error_logger:error_report(Report),
+      %% NOTE: mustache templates need \ because they are not awesome.
+      Req:respond({500, [{"Content-Type", "text/plain"}],
+          "request failed, sorry\n"})
+end.
 
 %% Internal API
 
+render(Path, DocRoot, Data) ->
+  case string:right(Path, 1) of
+    "/" ->
+      FinePath = filename:join([Path, "index.html"]);
+    _ ->
+      FinePath = Path
+  end,
+  "/" ++ FileName = FinePath,
+  {ok, Rendered} = render_template(
+    filename:join([DocRoot, mochiweb_util:safe_relative_path(FileName)]),
+    Data
+  ),
+  Rendered.
+
+render_template(FullPath, Data) ->
+  erlydtl:compile(FullPath, template),
+  template:render(Data).
+
 get_option(Option, Options) ->
-    {proplists:get_value(Option, Options), proplists:delete(Option, Options)}.
+  {proplists:get_value(Option, Options), proplists:delete(Option, Options)}.
 
 %%
 %% Tests
@@ -61,9 +84,9 @@ get_option(Option, Options) ->
 -include_lib("eunit/include/eunit.hrl").
 
 you_should_write_a_test() ->
-    ?assertEqual(
-       "No, but I will!",
-       "Have you written any tests?"),
-    ok.
+  ?assertEqual(
+    "No, but I will!",
+    "Have you written any tests?"),
+  ok.
 
 -endif.

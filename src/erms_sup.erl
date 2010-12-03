@@ -42,7 +42,9 @@ upgrade() ->
 %% @doc supervisor callback.
 init([]) ->
     Web = web_specs(erms_web, 8080),
-    Processes = [Web],
+    Srv = {erms_server, {erms_server, start, [erms_server]},
+      permanent, brutal_kill, worker, [erms_server]},
+    Processes = [Web, Srv],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.
@@ -54,4 +56,5 @@ web_specs(Mod, Port) ->
     {Mod,
      {Mod, start, [WebConfig]},
      permanent, 5000, worker, dynamic}.
+
 

@@ -1,8 +1,20 @@
+<!DOCTYPE html>
 <html>
-<head>
-<title>It Worked</title>
-</head>
-<body>
-erms running.
-</body>
+  <head>
+    <title>It Worked</title>
+  </head>
+  <body>
+    <p>erms is running.</p>
+    <p>Users: {{ users | join: ", " }}</p>
+    <b>Messages:</b>
+    {% if messages %}
+    <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <i>No messages</i>
+    {% endif %}
+  </body>
 </html>
