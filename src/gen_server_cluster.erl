@@ -30,7 +30,7 @@
 %% API
 %%====================================================================
 
-%% Starts the global or local server under the given name where 
+%% @doc Starts the global or local server under the given name where 
 %% the target gen_server is given by the target module.
 %% If some global server is already running, the server is started as a local
 %% server, otherwise as the new global server. 
@@ -46,7 +46,7 @@ start(Name, TargetModule, TargetArgs, Options) ->
       start_local_server(Name)
   end.
 
-%% Starts a local server if a global server is already running,
+%% @doc Starts a local server if a global server is already running,
 %% otherwise noGlobalServerRunning is returned.
 start_local_server(Name) ->
   case is_running(Name) of
@@ -63,12 +63,12 @@ start_local_server(Name) ->
       end
   end.
 
-%% Returns the global server pid and the list of all local server pids:
+%% @doc Returns the global server pid and the list of all local server pids:
 %% {pid(), [pid()]}
 get_all_server_pids(Name) ->
   gen_server:call({global,Name}, get_all_server_pids).
 
-%% Returns the global server node and the list of all local server nodes:
+%% @doc Returns the global server node and the list of all local server nodes:
 %% {node(), [node()]}
 get_all_server_nodes(Name) ->
   {GlobalServerPid, LocalServerPidList} = get_all_server_pids(Name),
@@ -77,7 +77,7 @@ get_all_server_nodes(Name) ->
   end,
   {Fun(GlobalServerPid), lists:map(Fun, LocalServerPidList)}.
 
-%% Returns true if there is some global server running, otherwise false.
+%% @doc Returns true if there is some global server running, otherwise false.
 is_running(Name) ->
   case catch get_all_server_pids(Name) of
     {Pid, PidList} when is_pid(Pid), is_list(PidList) ->
@@ -86,11 +86,11 @@ is_running(Name) ->
       false
   end.
 
-%% Stops the global server.
+%% @doc Stops the global server.
 stop(Name, global) ->
   gen_server:call({global, Name}, {stopByGenServerCluster, stopGlobalServer});
 
-%% Stops both the global server and all local servers.
+%% @doc Stops both the global server and all local servers.
 stop(Name, all) ->
   {_, LocalServerNodeList} = get_all_server_nodes(Name),
   Request = {stopByGenServerCluster, stopAllServer},
@@ -102,22 +102,22 @@ stop(Name, all) ->
   end,
   gen_server:call({global, Name}, Request);
 
-%% Stops the local server running on the given node.
+%% @doc Stops the local server running on the given node.
 stop(Name, Node) ->
   gen_server:multi_call([Node], Name, {stopByGenServerCluster, stopLocalServer}).
 
-%% Returns the target state.
+%% @doc Returns the target state.
 get_target_state(Name) ->
   gen_server:call({global,Name}, get_target_state).
 
-%% Links the pid with the global server. This link is transferred to 
+%% @doc Links the pid with the global server. This link is transferred to 
 %% a new global server if the current one dies. 
 link(Name, Pid) ->
   %% must be cast since this can be called by target server 
   %% which hangs if we use call instead! 
   gen_server:cast({global,Name}, {link, Pid}). 
 
-%% Removes the link between pid and the global server that was
+%% @doc Removes the link between pid and the global server that was
 %% established before.
 unlink(Name, Pid) ->
   gen_server:cast({global,Name}, {unlink, Pid}).
@@ -127,13 +127,11 @@ unlink(Name, Pid) ->
 %% gen_server callbacks
 %%====================================================================
 
-%%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @spec     init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
-%%--------------------------------------------------------------------
+%% @doc Initiates the server
 
 %% Called by global server at startup.
 init({initGlobal, Name, TargetModule, TargetArgs}) ->
@@ -165,15 +163,13 @@ init({initLocal, Name}) ->
   State = gen_server:call({global,Name}, init_local_server_state),
   {ok,State}.
 
-%%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
-%%--------------------------------------------------------------------
+%% @doc Handling call messages
 
 %% Called by global server to get the target state.
 handle_call(get_target_state, _From, State) ->
@@ -214,12 +210,10 @@ handle_call(Request, From, State) ->
       State#state.targetState]).
 
 
-%%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @spec     handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
-%%--------------------------------------------------------------------
+%% @doc Handling cast messages
 
 %% Called by local server to update its state.
 %% The update function is sent by the global server and returns the new state
@@ -264,12 +258,10 @@ handle_cast(Msg, State) ->
   delegate_to_target(State, handle_cast, [Msg, State#state.targetState]).
 
 
-%%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @spec     handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
-%%--------------------------------------------------------------------
+%% @doc Handling all non call/cast messages
 
 %% Called by all local servers when the global server has died.
 %% Each local server tries to register itself as the new global one,
@@ -334,13 +326,11 @@ handle_info(Info, State) ->
   delegate_to_target(State, handle_info, [Info, State#state.targetState]).
 
 
-%%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
+%% @spec     terminate(Reason, State) -> void()
+%% @doc This function is called by a gen_server when it is about to
 %% terminate. It should be the opposite of Module:init/1 and do any necessary
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
-%%--------------------------------------------------------------------
 
 %% Called by global or local server when it is about to terminate.
 terminate(Reason, State) ->
@@ -349,10 +339,8 @@ terminate(Reason, State) ->
   io:format("Server ~p stopped.~n", [State#state.name]).
 
 
-%%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
-%%--------------------------------------------------------------------
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @doc Convert process state when code is changed
 
 %% Currently not supported.
 code_change(_OldVsn, State, _Extra) ->
@@ -363,7 +351,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 
-%% Called by global server to delegate a gen_server callback function
+%% @doc Called by global server to delegate a gen_server callback function
 %% (handle_call, etc.) to the target module. The result returned by the
 %% target is transformed to a corresponding result for the gen_server_cluster
 %% where the target state is updated.
@@ -427,7 +415,7 @@ delegate_to_target(State, TargetCall, Args) ->
   end,
   Result.
 
-%% Called by global server to update the state of all servers.
+%% @doc Called by global server to update the state of all servers.
 %% The result of applying UpdateFun to State is returned, and
 %% an update request to all local servers is sent. 
 update_all_server_state(State, UpdateFun) ->
@@ -438,7 +426,7 @@ update_all_server_state(State, UpdateFun) ->
   lists:foreach(CastFun, State#state.localServerPidList),
   NewState.
 
-%% Called by each local server to try registering itself as the new global 
+%% @doc Called by each local server to try registering itself as the new global 
 %% server. It waits until the old registration of OldGlobalServerPid is
 %% removed and then tries to register the calling process globally under 
 %% the given name. The new registered global server pid is returned which can

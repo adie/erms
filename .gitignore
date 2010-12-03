@@ -3,6 +3,6 @@
 /_test
 /.eunit
 /docs
-/deps/mochiweb
+/deps/*
 erl_crash.dump
 *~

@@ -1,0 +1,8 @@
+{application, erms_core, [
+  {description, "erms core app"},
+  {vsn, "0.0.1"},
+  {modules, [erms_core, erms_core_app, erms_core_sup]},
+  {registered, [erms_core]},
+  {applications, [kernel, stdlib, sasl]},
+  {mod, {erms_core_app, []}}
+]}.
