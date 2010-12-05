@@ -42,14 +42,21 @@ upgrade() ->
 %% @doc supervisor callback.
 init([]) ->
     Web = web_specs(erms_web, 8080),
+
     Srv = {erms_server, {erms_server, start, [erms_server]},
       permanent, brutal_kill, worker, [erms_server]},
+
     Core = {erms_core, {erms_core, start_link, []},
       permanent, 5000, worker, [erms_core]},
+
     {ok, [{adapter, Database}, {options, Options}]} = application:get_env(erms, db),
     DB = {erms_db, {erms_db, start, [Database, Options]},
       permanent, 5000, worker, [erms_db]},
-    Processes = [Web, Core, DB],
+
+    Auth = {erms_auth, {erms_auth, start_link, []},
+      permanent, 5000, worker, [erms_auth]},
+
+    Processes = [Web, Srv, Core, DB, Auth],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.

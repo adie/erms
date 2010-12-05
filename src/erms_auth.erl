@@ -1,23 +1,20 @@
 %% @author Anton Dieterle <antondie@gmail.com>
 %% @copyright 2010 Anton Dieterle <antondie@gmail.com>
 
-%% @doc DB server for erms.
+%% @doc Core server for erms.
 
--module(erms_db).
+-module(erms_auth).
 -author("Anton Dieterle <antondie@gmail.com>").
 
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 -define(SNAME, {global, ?SERVER}).
 
--record(db_info, {db, options}).
--record(state, {db_info = #db_info{}}).
-
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start/2, code_gen/1]).
+-export([start_link/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -28,25 +25,18 @@
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
-start(Database, Options) ->
-  gen_server:start_link(?SNAME, ?MODULE, #db_info{db=Database, options=Options}, []).
 
-code_gen(Models) ->
-  gen_server:call(?SNAME, {code_gen, Models}).
+start_link() ->
+  gen_server:start_link(?SNAME, ?MODULE, [], []).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init(DbInfo) ->
-  process_flag(trap_exit, true),
-  connect(DbInfo),
-  {ok, #state{db_info=DbInfo}}.
+init(Args) ->
+  erms_db:code_gen([users]),
+  {ok, Args}.
 
-handle_call({code_gen, Models}, _From, #state{db_info=DbInfo} = State) ->
-  #db_info{db=Database} = DbInfo,
-  code_gen_internal(Models, Database),
-  {reply, ok, State};
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
@@ -65,32 +55,4 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
-
-erlydb_mysql_init(Options) ->
-  erlydb:start(mysql, Options).
-
-erlydb_mnesia_init(Options) ->
-  erlydb:start(mnesia, Options).
-
-erlydb_psql_init(_Options) ->
-  erlydb_psql:start().
-
-connect(#db_info{db=Database, options=Options}) ->
-  %Driver = list_to_atom("erlydb_" ++ atom_to_list(Database)),
-  case Database of
-    mysql ->
-      erlydb_mysql_init(Options);
-    mnesia ->
-      erlydb_mnesia_init(Options);
-    pgsql ->
-      erlydb_psql_init(Options)
-  end,
-  code_gen_internal([options], Database),
-  ok.
-
-code_gen_internal(Models, Database) ->
-  code_gen_internal(Models, Database, []).
-
-code_gen_internal(Models, Database, Options) ->
-  erlydb:code_gen(Models, Database, Options).
 
