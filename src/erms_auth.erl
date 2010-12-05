@@ -1,7 +1,7 @@
 %% @author Anton Dieterle <antondie@gmail.com>
 %% @copyright 2010 Anton Dieterle <antondie@gmail.com>
 
-%% @doc Core server for erms.
+%% @doc Authentication server for erms.
 
 -module(erms_auth).
 -author("Anton Dieterle <antondie@gmail.com>").
@@ -14,7 +14,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0]).
+-export([start_link/0, api_functions/0, test_api/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -28,6 +28,12 @@
 
 start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
+
+api_functions() ->
+  [test_api].
+
+test_api() ->
+  <<"Hello, World!">>.
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions

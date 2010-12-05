@@ -23,23 +23,50 @@ stop() ->
 loop(Req, DocRoot) ->
   Path = Req:get(path),
   try
-    case Req:get(method) of
-      Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-        case Path of
-          "/" ->
-            Req:ok({"text/html", [], render(Path, DocRoot, [
-                    {messages, erms_core:get_all_msg()}
-                  ])});
+    case string:tokens(Path, "/") of
+      ["api"|Params] ->
+        case Params of
+          [Module,Function|_Options] ->
+            M = list_to_atom(Module),
+            F = list_to_atom(Function),
+            Result = M:F(),
+            Req:ok({"text/plain", [],
+                mochijson2:encode({struct, [{result, Result}]})
+              });
+          [Module] ->
+            M = list_to_atom(Module),
+            case (catch M:api_functions()) of
+              {'EXIT', {undef, _}} ->
+                Req:ok({"text/plain", [],
+                    mochijson2:encode({struct, [{error, <<"No such module">>}]})
+                  });
+              Funs ->
+                Req:ok({"text/plain", [],
+                    mochijson2:encode({struct, [{functions, Funs}]})
+                  })
+              end;
           _ ->
-            Req:serve_file(Path, DocRoot)
-        end;
-      'POST' ->
-        case Path of
-          _ ->
-            Req:not_found()
+            Req:ok({"text/plain", [], "We're in API!"})
         end;
       _ ->
-        Req:respond({501, [], []})
+        case Req:get(method) of
+          Method when Method =:= 'GET'; Method =:= 'HEAD' ->
+            case Path of
+              "/" ->
+                Req:ok({"text/html", [], render(Path, DocRoot, [
+                        {messages, erms_core:get_all_msg()}
+                      ])});
+              _ ->
+                Req:serve_file(Path, DocRoot)
+            end;
+          'POST' ->
+            case Path of
+              _ ->
+                Req:not_found()
+            end;
+          _ ->
+            Req:respond({501, [], []})
+        end
     end
   catch
     Type:What ->
@@ -48,7 +75,6 @@ loop(Req, DocRoot) ->
         {type, Type}, {what, What},
         {trace, erlang:get_stacktrace()}],
       error_logger:error_report(Report),
-      %% NOTE: mustache templates need \ because they are not awesome.
       Req:respond({500, [{"Content-Type", "text/plain"}],
           "request failed, sorry\n"})
 end.
