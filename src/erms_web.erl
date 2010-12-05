@@ -1,10 +1,10 @@
-%% @author Mochi Media <dev@mochimedia.com>
-%% @copyright 2010 Mochi Media <dev@mochimedia.com>
+%% @author Anton Dieterle <antondie@gmail.com>
+%% @copyright 2010 Anton Dieterle <antondie@gmail.com>
 
 %% @doc Web server for erms.
 
 -module(erms_web).
--author("Mochi Media <dev@mochimedia.com>").
+-author("Anton Dieterle <antondie@gmail.com>").
 
 -export([start/1, stop/0, loop/2]).
 

@@ -1,21 +1,23 @@
 %% @author Anton Dieterle <antondie@gmail.com>
 %% @copyright 2010 Anton Dieterle <antondie@gmail.com>
 
-%% @doc Core server for erms.
+%% @doc DB server for erms.
 
--module(erms_core).
+-module(erms_db).
 -author("Anton Dieterle <antondie@gmail.com>").
 
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 -define(SNAME, {global, ?SERVER}).
--record(state, {msgList=[]}).
+
+-record(db_info, {db, options}).
+-record(status, {db_info = #db_info{}}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, send/1, get_all_msg/0]).
+-export([start/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -26,32 +28,18 @@
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
-
-start_link() ->
-  gen_server:start_link(?SNAME, ?MODULE, [], []).
-
-send(Msg) ->
-  gen_server:call(?SNAME, {send, {node(), Msg}}).
-
-get_all_msg() ->
-  gen_server:call(?SNAME, get_all_msg).
+start(Database, Options) ->
+  gen_server:start_link(?SNAME, ?MODULE, #db_info{db=Database, options=Options}, []).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init(_Args) ->
-  {ok, #state{}}.
+init(DbInfo) ->
+  process_flag(trap_exit, true),
+  connect(DbInfo),
+  {ok, #status{db_info=DbInfo}}.
 
-handle_call({send, {Node, Msg}}, _From, State) ->
-  io:format("[~p]: ~p~n", [Node, Msg]),
-  NewMsgList = [{Node, Msg}|State#state.msgList],
-  {reply, sent, State#state{msgList=NewMsgList}};
-handle_call(get_all_msg, _From, State) ->
-  List = lists:reverse(State#state.msgList),
-  {reply, List, State};
-handle_call(stop, _From, State) ->
-  {stop, normalStop, State};
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
@@ -71,3 +59,24 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+erlydb_mysql_init(Options) ->
+  erlydb:start(mysql, Options).
+
+erlydb_mnesia_init(Options) ->
+  erlydb:start(mnesia, Options).
+
+erlydb_psql_init(_Options) ->
+  erlydb_psql:start().
+
+connect(#db_info{db=Database, options=Options}) ->
+  %Driver = list_to_atom("erlydb_" ++ atom_to_list(Database)),
+  case Database of
+    mysql ->
+      erlydb_mysql_init(Options);
+    mnesia ->
+      erlydb_mnesia_init(Options);
+    pgsql ->
+      erlydb_psql_init(Options)
+  end,
+  erlydb:code_gen([options], Database, []),
+  ok.

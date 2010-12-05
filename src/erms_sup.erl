@@ -46,7 +46,10 @@ init([]) ->
       permanent, brutal_kill, worker, [erms_server]},
     Core = {erms_core, {erms_core, start_link, []},
       permanent, 5000, worker, [erms_core]},
-    Processes = [Web, Core, Srv],
+    {ok, [{adapter, Database}, {options, Options}]} = application:get_env(erms, db),
+    DB = {erms_db, {erms_db, start, [Database, Options]},
+      permanent, 5000, worker, [erms_db]},
+    Processes = [Web, Core, DB],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.
