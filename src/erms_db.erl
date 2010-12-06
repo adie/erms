@@ -45,8 +45,8 @@ init(DbInfo) ->
 
 handle_call({code_gen, Models}, _From, #state{db_info=DbInfo} = State) ->
   #db_info{db=Database} = DbInfo,
-  code_gen_internal(Models, Database),
-  {reply, ok, State};
+  Result = code_gen_internal(Models, Database),
+  {reply, Result, State};
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
@@ -85,7 +85,7 @@ connect(#db_info{db=Database, options=Options}) ->
     pgsql ->
       erlydb_psql_init(Options)
   end,
-  code_gen_internal([options], Database),
+  ok = code_gen_internal([options], Database),
   ok.
 
 code_gen_internal(Models, Database) ->

@@ -14,7 +14,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, api_functions/0, test_api/0]).
+-export([start_link/0, api_functions/0, test_api/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -32,7 +32,7 @@ start_link() ->
 api_functions() ->
   [test_api].
 
-test_api() ->
+test_api(_Args) ->
   <<"Hello, World!">>.
 
 %% ------------------------------------------------------------------

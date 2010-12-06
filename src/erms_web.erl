@@ -23,13 +23,14 @@ stop() ->
 loop(Req, DocRoot) ->
   Path = Req:get(path),
   try
+    % Process API requests
     case string:tokens(Path, "/") of
       ["api"|Params] ->
         case Params of
-          [Module,Function|_Options] ->
+          [Module,Function|Args] ->
             M = list_to_atom(Module),
             F = list_to_atom(Function),
-            Result = M:F(),
+            Result = M:F(Args),  % exception can be thrown here
             Req:ok({"text/plain", [],
                 mochijson2:encode({struct, [{result, Result}]})
               });
@@ -49,6 +50,7 @@ loop(Req, DocRoot) ->
             Req:ok({"text/plain", [], "We're in API!"})
         end;
       _ ->
+        % Process non-API requests
         case Req:get(method) of
           Method when Method =:= 'GET'; Method =:= 'HEAD' ->
             case Path of
