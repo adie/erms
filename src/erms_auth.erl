@@ -38,9 +38,6 @@ test_api(_Args) ->
 check_password(Login, Password) ->
   gen_server:call(?SNAME, {check_password, Login, Password}).
 
-login_cookies(User) ->
-  gen_server:call(?SNAME, {login_cookies, User}).
-
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
@@ -51,8 +48,6 @@ init(Args) ->
 
 handle_call({check_password, Login, Password}, _From, State) ->
   {reply, internal_check_password(Login, Password), State};
-handle_call({login_cookies, User}, _From, State) ->
-  {reply, internal_login_cookies(User), State};
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
