@@ -104,6 +104,14 @@ render_template(FullPath, Data) ->
 get_option(Option, Options) ->
   {proplists:get_value(Option, Options), proplists:delete(Option, Options)}.
 
+session_identifier(User) ->
+  {ok, [{secret, Secret}]} = application:get_env(erms, auth),
+  mochihex:to_hex(erlang:md5(Secret ++ users:id(User))).
+
+login_cookies(User) ->
+  [ mochiweb_cookies:cookie("user_id", users:id(User), [{path, "/"}]),
+    mochiweb_cookies:cookie("session_id", session_identifier(User), [{path, "/"}]) ].
+
 %%
 %% Tests
 %%

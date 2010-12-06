@@ -1,12 +1,12 @@
 %% @author Anton Dieterle <antondie@gmail.com>
 %% @copyright 2010 Anton Dieterle <antondie@gmail.com>
-
 %% @doc Authentication server for erms.
 
 -module(erms_auth).
 -author("Anton Dieterle <antondie@gmail.com>").
 
 -behaviour(gen_server).
+
 -define(SERVER, ?MODULE).
 -define(SNAME, {global, ?SERVER}).
 
@@ -14,7 +14,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, api_functions/0, test_api/1]).
+-export([start_link/0, api_functions/0, test_api/1, check_password/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -35,6 +35,12 @@ api_functions() ->
 test_api(_Args) ->
   <<"Hello, World!">>.
 
+check_password(Login, Password) ->
+  gen_server:call(?SNAME, {check_password, Login, Password}).
+
+login_cookies(User) ->
+  gen_server:call(?SNAME, {login_cookies, User}).
+
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
@@ -43,6 +49,10 @@ init(Args) ->
   erms_db:code_gen([users]),
   {ok, Args}.
 
+handle_call({check_password, Login, Password}, _From, State) ->
+  {reply, internal_check_password(Login, Password), State};
+handle_call({login_cookies, User}, _From, State) ->
+  {reply, internal_login_cookies(User), State};
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
@@ -61,4 +71,12 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+internal_check_password(Login, Password) ->
+  case users:find_first({login, '=', Login}) of
+    undefined ->
+      false;
+    User ->
+      Password =:= users:password(User)
+  end.
 
