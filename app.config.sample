@@ -1,6 +1,6 @@
 [
   {kernel, [
-    {distributed, [{erms, 5000, ['erms_dev@adie-laptop']}]},
+    {distributed, [{erms, 5000, ['erms_dev@adie-desktop']}]},
     {sync_nodes_timeout, 5000}
   ]},
   {erms, [
