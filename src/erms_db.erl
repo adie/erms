@@ -66,27 +66,20 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-erlydb_mysql_init(Options) ->
-  erlydb:start(mysql, Options).
-
-erlydb_mnesia_init(Options) ->
-  erlydb:start(mnesia, Options).
-
-erlydb_psql_init(_Options) ->
-  erlydb_psql:start().
-
 connect(#db_info{db=Database, options=Options}) ->
-  %Driver = list_to_atom("erlydb_" ++ atom_to_list(Database)),
-  case Database of
-    mysql ->
-      erlydb_mysql_init(Options);
-    mnesia ->
-      erlydb_mnesia_init(Options);
-    pgsql ->
-      erlydb_psql_init(Options)
-  end,
+  ok = erlydb_init(Database, Options),
   ok = code_gen_internal([options], Database),
   ok.
+
+erlydb_init(mysql, Options) ->
+  erlydb:start(mysql, Options);
+
+erlydb_init(mnesia, Options) ->
+  erlydb:start(mnesia, Options);
+
+erlydb_init(pgsql, _Options) ->
+  erlydb_psql:start().
+
 
 code_gen_internal(Models, Database) ->
   code_gen_internal(Models, Database, []).

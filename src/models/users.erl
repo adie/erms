@@ -3,5 +3,5 @@
 -export([fields/0]).
 
 fields() ->
-  [id, login, password, fullname, info].
+  [id, login, password_hash, fullname, info].
 

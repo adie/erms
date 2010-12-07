@@ -14,7 +14,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, api_functions/0, test_api/1, check_password/2]).
+-export([start_link/0, api_functions/0, test_api/1, check_password/2, hash_for/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -37,6 +37,10 @@ test_api(_Args) ->
 
 check_password(Login, Password) ->
   gen_server:call(?SNAME, {check_password, Login, Password}).
+
+hash_for(Name, Password) ->
+  Salt = mochihex:to_hex(erlang:md5(Name)),
+  list_to_binary(mochihex:to_hex(erlang:md5(Salt ++ Password))).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -72,6 +76,6 @@ internal_check_password(Login, Password) ->
     undefined ->
       false;
     User ->
-      Password =:= users:password(User)
+      hash_for(Login, Password) =:= users:password_hash(User)
   end.
 
