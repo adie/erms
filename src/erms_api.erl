@@ -6,7 +6,7 @@
 -module(erms_api).
 -author("Anton Dieterle <antondie@gmail.com>").
 
--export([process_api/2]).
+-export([process_api/2, login_cookies/1]).
 
 %% Processing API requests
 
@@ -33,10 +33,12 @@ process_api(Req, Params) ->
         undefined ->
           api_error(Req, <<"You need to authenticate first">>);
         User ->
-          case session_identifier(UserId) =:= Req:get_cookie_value("session_id") of
-            false ->
-              api_error(Req, <<"You need to authenticate first">>);
-            true ->
+          case erms_session_store:read(Req:get_cookie_value("session_id")) of
+            not_found ->
+              api_error(Req, <<"You need to authenticate first.">>);
+            expired ->
+              api_error(Req, <<"Your session expired. Plase authenticate again.">>);
+            SessUserId ->
               process_api(Req, Params, User)
           end
       end
@@ -77,14 +79,8 @@ api_error(Req, Error) ->
 
 %% Using login information
 
-session_identifier(UserId) when is_integer(UserId) ->
-  session_identifier(integer_to_list(UserId));
-session_identifier(UserId) ->
-  {ok, [{secret, Secret}]} = application:get_env(erms, auth),
-  mochihex:to_hex(erlang:md5(Secret ++ UserId)).
-
 login_cookies(UserId) ->
-  login_cookies(UserId, session_identifier(UserId)).
+  login_cookies(UserId, erms_session_store:create(UserId)).
 login_cookies(UserId, SessionId) ->
   [ mochiweb_cookies:cookie("user_id", UserId, [{path, "/"}]),
     mochiweb_cookies:cookie("session_id", SessionId, [{path, "/"}]) ].
@@ -94,4 +90,5 @@ login_cookies(UserId, SessionId) ->
 %%
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+
 -endif.

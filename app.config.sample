@@ -16,8 +16,9 @@
         {poolsize, 1}
       ]}
     ]},
-    {auth, [
-      {secret, "UniqueAndSecretString"}
+    {session_store, [
+      {secret, "UniqueAndSecretString"},
+      {expire_after, 3600}
     ]}
   ]}
 ].
