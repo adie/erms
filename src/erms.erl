@@ -21,8 +21,8 @@ ensure_started(App) ->
 start() ->
     erms_deps:ensure(),
     ensure_started(crypto),
+    ensure_started(erms_db),
     application:start(erms).
-
 
 %% @spec stop() -> ok
 %% @doc Stop the erms server.

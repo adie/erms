@@ -28,6 +28,7 @@
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
+
 start(Database, Options) ->
   gen_server:start_link(?SNAME, ?MODULE, #db_info{db=Database, options=Options}, []).
 

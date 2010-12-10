@@ -1,9 +1,9 @@
-/ebin
-/doc
-/_test
-/.eunit
-/docs
-/deps/*
+ebin
+doc
+_test
+.eunit
+docs
+deps/*
 erl_crash.dump
 *~
-/app.config
+app.config
