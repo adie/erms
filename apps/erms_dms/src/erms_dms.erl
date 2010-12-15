@@ -34,14 +34,19 @@ start_link() ->
 folder('GET', Request, [], Args, User) ->
   folder('GET', Request, [0], Args, User);
 folder('GET', _Request, [Id], _Args, User) ->
-  gen_server:call(?SNAME, {get_folder, Id, User}).
+  gen_server:call(?SNAME, {get_folder, Id, User});
+folder('POST', Request, [], Args, User) ->
+  folder('POST', Request, [0], Args, User);
+folder('POST', Request, [Id], Args, User) ->
+  gen_server:call(?SNAME, {create_folder, Id, Args, User});
+folder(_,_,_,_,_) -> ok.
 
 document('GET', _Request, [Id], _Args, _User) ->
   gen_server:call(?SNAME, {get_document, Id});
-
 document('POST', Request, [], Args, User) ->
   [File|_] = Request:post_files(),
-  gen_server:call(?SNAME, {create_document, Args, File, User}).
+  gen_server:call(?SNAME, {create_document, Args, File, User});
+document(_,_,_,_,_) -> ok.
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -77,9 +82,16 @@ handle_call({get_folder, Id, User}, _From, State) ->
           end,
           document:find({doc_folder_id, '=', Id})
         ),
-        {response, [{folder, Folder}, {subfolders, Folders}, {documents, Documents}]}
+        {response, [{folder, [{name, doc_folder:name(Folder)}]}, {subfolders, Folders}, {documents, Documents}]}
   end,
   {reply, Result, State};
+
+handle_call({create_folder, Id, Args, User}, _From, State) ->
+  Name = proplists:get_value("name", Args),
+  Now = calendar:universal_time(),
+  Folder = doc_folder:new(Name, Id, Now),
+  doc_folder:save(Folder),
+  {reply, {response, ok}, State};
 
 handle_call({get_document, Id}, _From, State) ->
   Result = case
