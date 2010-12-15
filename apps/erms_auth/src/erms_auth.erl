@@ -41,6 +41,7 @@ hash_for(Name, Password) ->
 %% ------------------------------------------------------------------
 
 init(Args) ->
+  process_flag(trap_exit, true),
   erms_db:code_gen([users]),
   {ok, Args}.
 

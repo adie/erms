@@ -1,0 +1,12 @@
+%% -*- erlang -*-
+%% ex: ft=erlang et
+{application, erms_auth,
+ [{description, "erms authentication app"},
+    {vsn, "0.0.1"},
+    {modules, [erms_auth, erms_auth_app, erms_auth_sup, users]},
+    {registered, [erms_auth]},
+    {mod, {erms_auth_app, []}},
+    {applications, [kernel, stdlib, sasl]},
+    {env, []}
+]}.
+

@@ -49,13 +49,10 @@ init([]) ->
     Core = {erms_core, {erms_core, start_link, []},
       permanent, 5000, worker, [erms_core]},
 
-    Auth = {erms_auth, {erms_auth, start_link, []},
-      permanent, 5000, worker, [erms_auth]},
-
     Sessions = {erms_session_store, {erms_session_store, start, []},
       permanent, 5000, worker, [erms_session_store]},
 
-    Processes = [Web, Srv, Core, Auth, Sessions],
+    Processes = [Web, Srv, Core, Sessions],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.
