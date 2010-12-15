@@ -21,36 +21,71 @@ stop() ->
   mochiweb_http:stop(?MODULE).
 
 loop(Req, DocRoot) ->
-  Path = Req:get(path),
+  Request = simple_bridge:make_request(mochiweb_request_bridge, {Req, DocRoot}),
+  Response = simple_bridge:make_response(mochiweb_response_bridge, {Req, DocRoot}),
   try
-    case string:tokens(Path, "/") of
-      ["api"|Params] ->
-        erms_api:process_api(Req, Params);
-      _ ->
-        % Process non-API requests
+    case string:tokens(Request:path(), "/") of
+      ["test" | Params] ->
+        Path = "/"++string:join(Params, "/"),
         case Req:get(method) of
           Method when Method =:= 'GET'; Method =:= 'HEAD' ->
             case Path of
+              "/logout" ->
+                Resp = Response:cookie("session_id", ""),
+                Resp1 = Resp:status_code(302),
+                Resp2 = Resp1:header("Location", "/test"),
+                Resp3 = Resp2:data("ok"),
+                Resp3:build_response();
               "/" ->
-                Req:ok({"text/html", [], render(Path, DocRoot, [
-                        {messages, erms_core:get_all_msg()}
-                      ])});
-              _ ->
-                Req:serve_file(Path, DocRoot)
+                SessionId = proplists:get_value("session_id", Request:cookies()),
+                Vars = case SessionId of
+                    undefined ->
+                      [];
+                    SID ->
+                      inets:start(),
+                      {ok, {_,_Headers,Json}} = httpc:request("http://localhost:8080/erms_dms/folder?session_id="++SID),
+                      {struct, List} = mochijson2:decode(Json),
+                      [{session_id, SessionId},{list, List}]
+                  end,
+                Req:ok({"text/html", [], render(Path, DocRoot, Vars)});
+              "/"++FilePath ->
+                Req:serve_file(FilePath, DocRoot)
             end;
           'POST' ->
             case Path of
+              "/" ->
+                Post = Request:post_params(),
+                Login = proplists:get_value("login", Post),
+                Password = proplists:get_value("password", Post),
+                inets:start(),
+                {ok, {_,_Headers,Json}} = httpc:request("http://localhost:8080/login/"++Login++"/"++Password),
+                {struct, List} = mochijson2:decode(Json),
+                case proplists:get_value(<<"session_id">>, List) of
+                  undefined ->
+                    Resp = Response:data("error"),
+                    Resp1 = Resp:status_code(302),
+                    Resp2 = Resp1:header("Location", "/test/login.html"),
+                    Resp2:build_response();
+                  SessionId ->
+                    Resp = Response:data("ok"),
+                    Resp1 = Resp:status_code(302),
+                    Resp2 = Resp1:header("Location", "/test"),
+                    Resp3 = Resp2:cookie("session_id", SessionId),
+                    Resp3:build_response()
+                end;
               _ ->
                 Req:not_found()
             end;
           _ ->
             Req:respond({501, [], []})
-        end
+        end;
+      Params ->
+        erms_api:process_api(Req, DocRoot, Request, Params)
     end
   catch
     Type:What ->
       Report = ["web request failed",
-        {path, Path},
+        {path, Request:path()},
         {type, Type}, {what, What},
         {trace, erlang:get_stacktrace()}],
       error_logger:error_report(Report),

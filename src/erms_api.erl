@@ -6,70 +6,79 @@
 -module(erms_api).
 -author("Anton Dieterle <antondie@gmail.com>").
 
--export([process_api/2]).
+-export([process_api/4]).
+
+-record(context, {req, doc_root, simple_req}).
 
 %% Processing API requests
 
-process_api(Req, ["login",Login,Password]) ->
+process_api(Req, DocRoot, SimpleBridge, Params) ->
+  process(#context{req=Req, doc_root=DocRoot, simple_req=SimpleBridge}, Params).
+
+process(#context{req=Req}, ["login",Login,Password]) ->
   case erms_auth:check_password(
       list_to_binary(Login),
       list_to_binary(Password)) of
-    true ->
-      User = users:find_first({login, '=', Login}),
+    false ->
+      return_error(Req, <<"Wrong username or password">>);
+    User ->
       SessionId = erms_session_store:create(users:id(User)),
       return_ok(Req, {struct, [
             {message, <<"You're logged in now">>},
             {session_id, list_to_binary(SessionId)}
-          ]});
-    _ ->
-      return_error(Req, <<"Wrong username or password">>)
+          ]})
   end;
 
-process_api(Req, Params) ->
-  case proplists:get_value("session_id", Req:parse_qs()) of
+process(#context{req=Req,simple_req=Request}=Context, Path) ->
+  Params = case
+    Request:request_method() of
+      'POST' -> Request:post_params();
+      _ -> Request:query_params()
+    end,
+  case proplists:get_value("session_id", Params) of
     undefined ->
       return_error(Req, <<"You need to authenticate first">>);
     SessionId ->
-      process_api(Req, Params, SessionId)
+      process(Context, Path, Params, SessionId)
   end.
 
-process_api(Req, ["logout"], SessionId) ->
+process(#context{req=Req}, ["logout"], _Params, SessionId) ->
   erms_session_store:destroy(SessionId),
   return_ok(Req, <<"You have logged out">>);
 
-process_api(Req, Params, SessionId) ->
-  io:format("SessionId: ~p~n", [SessionId]),
+process(#context{req=Req}=Context, Path, Params, SessionId) ->
   case erms_session_store:read(SessionId) of
     not_found ->
       return_error(Req, <<"You need to authenticate first.">>);
     expired ->
       return_error(Req, <<"Your session expired. Plase authenticate again.">>);
     UserId ->
-      io:format("UserId: ~p~n", [UserId]),
-      process_api(Req, Params, SessionId, users:find_id(UserId))
+      process(Context, Req:get(method), Path, Params, SessionId, users:find_id(UserId))
   end.
 
-process_api(Req, [Module,Function|Args], SessionId, User) ->
+process(Context, 'HEAD', Path, Params, SessionId, User) ->
+  process(Context, 'GET', Path, Params, SessionId, User);
+process(#context{req=Req,simple_req=Request}, Method, [Module,Function|Args], Params, _SessionId, User) ->
   M = list_to_atom(Module),
   F = list_to_atom(Function),
-  case catch M:F(Args) of
-    {'EXIT', {Error, _}} ->
+  case catch M:F(Method, Request, Args, Params, User) of
+    {'EXIT', {Error, Desc}} ->
+      error_logger:error_report([Error, Desc]),
       return_error(Req, [<<"Error in API call:">>, Error]);
-    Result ->
-      return_ok(Req, {struct, [{result, Result}]})
+    {error, Error} ->
+      return_error(Req, [Error]);
+    {response, Response} ->
+      return_ok(Req, {struct, [{response, Response}]});
+    {file, Filename, Binary} ->
+      Req:ok({
+          "",
+          [{"Content-Disposition",
+              "attachment; filename=\""++binary_to_list(Filename)++"\""}],
+          Binary
+        })
   end;
-
-process_api(Req, [Module], SessionId, User) ->
-  M = list_to_atom(Module),
-  case (catch M:api_functions()) of
-    {'EXIT', {undef, _}} ->
-      return_error(Req, <<"No such module">>);
-    Funs ->
-      return_ok(Req, {struct, [{functions, Funs}]})
-  end;
-
-process_api(Req, _Params, _SessionId, User) ->
-  return_ok(Req, [<<"Welcome to the API">>, users:fullname(User)]).
+process(#context{req=Req}, _Method, _Path, _Params, _SessionId, _User) ->
+  return_error(Req, [<<"Requested resource does not exist">>]).
 
 %% Response generation
 

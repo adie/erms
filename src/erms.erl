@@ -15,16 +15,26 @@ ensure_started(App) ->
             ok
     end.
 
+ensure_started_all([]) ->
+  ok;
+ensure_started_all([App|Modules]) ->
+  ensure_started(App),
+  ensure_started_all(Modules).
 
 %% @spec start() -> ok
 %% @doc Start the erms server.
 start() ->
     erms_deps:ensure(),
     ensure_started(crypto),
-    ensure_started(erms_db),
+
+    application:load(erms),
+    {ok, Modules} = application:get_env(erms, modules),
+    ensure_started_all(Modules),
+
     application:start(erms).
 
 %% @spec stop() -> ok
 %% @doc Stop the erms server.
 stop() ->
     application:stop(erms).
+

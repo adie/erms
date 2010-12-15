@@ -4,6 +4,16 @@
     {sync_nodes_timeout, 5000}
   ]},
   {erms, [
+    {session_store, [
+      {secret, "UniqueAndSecretString"},
+      {expire_after, 3600}
+    ]},
+    {modules, [
+      erms_db,
+      erms_dms
+    ]}
+  ]},
+  {erms_db, [
     {db, [
       {adapter, mysql},
       {options, [
@@ -15,10 +25,9 @@
         {encoding, utf8},
         {poolsize, 1}
       ]}
-    ]},
-    {session_store, [
-      {secret, "UniqueAndSecretString"},
-      {expire_after, 3600}
     ]}
+  ]},
+  {erms_dms, [
+    {file_storage, "/home/adie/projects/erms/dms_files"}
   ]}
 ].

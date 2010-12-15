@@ -9,7 +9,6 @@
 -behaviour(application).
 -export([start/2,stop/1]).
 
-
 %% @spec start(_Type, _StartArgs) -> ServerRet
 %% @doc application start callback for erms.
 start(_Type, _StartArgs) ->
@@ -20,3 +19,4 @@ start(_Type, _StartArgs) ->
 %% @doc application stop callback for erms.
 stop(_State) ->
     ok.
+

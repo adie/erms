@@ -46,6 +46,7 @@ destroy(SessionId) ->
 %% ------------------------------------------------------------------
 
 init(_Args) ->
+  process_flag(trap_exit, true),
   {ok, [{secret, Secret}, {expire_after, ExpireAfter}]} = application:get_env(erms, session_store),
   State = #state{secret_string=Secret, expire_after=ExpireAfter},
   erlang:send_after(ExpireAfter*1000, self(), expire_sessions),
@@ -101,7 +102,7 @@ code_change(_OldVsn, State, _Extra) ->
 session_identifier(UserId, Secret) when is_integer(UserId) ->
   session_identifier(integer_to_list(UserId), Secret);
 session_identifier(UserId, Secret) ->
-  mochihex:to_hex(erlang:md5(Secret ++ UserId)).
+  mochihex:to_hex(erlang:md5(Secret ++ UserId ++ integer_to_list(unix_timestamp(now())))).
 
 unix_timestamp({MegaSecs, Secs, _}) ->
   MegaSecs*1000000 + Secs.

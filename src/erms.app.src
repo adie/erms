@@ -6,6 +6,6 @@
   {modules, [erms, erms_app, erms_deps, erms_sup, erms_web, erms_server, gen_server_cluster]},
   {registered, []},
   {mod, {erms_app, []}},
-  {applications, [kernel, stdlib, crypto, sasl, erms_db]},
+  {applications, [kernel, stdlib, crypto, sasl]},
   {env, []}
 ]}.

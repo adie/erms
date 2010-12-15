@@ -1,0 +1,11 @@
+%% -*- erlang -*-
+%% ex: ft=erlang et
+{application, erms_dms,
+ [{description, "erms document management system app"},
+    {vsn, "0.0.1"},
+    {modules, [erms_dms, erms_dms_app, erms_dms_sup, document]},
+    {registered, [erms_dms]},
+    {mod, {erms_dms_app, []}},
+    {applications, [kernel, stdlib, sasl]},
+    {env, []}
+]}.

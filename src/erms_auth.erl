@@ -14,7 +14,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, api_functions/0, test_api/1, check_password/2, hash_for/2]).
+-export([start_link/0, check_password/2, hash_for/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -28,12 +28,6 @@
 
 start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
-
-api_functions() ->
-  [test_api].
-
-test_api(_Args) ->
-  <<"Hello, World!">>.
 
 check_password(Login, Password) ->
   gen_server:call(?SNAME, {check_password, Login, Password}).
@@ -76,6 +70,11 @@ internal_check_password(Login, Password) ->
     undefined ->
       false;
     User ->
-      hash_for(Login, Password) =:= users:password_hash(User)
+      case hash_for(Login, Password) =:= users:password_hash(User) of
+        true ->
+          User;
+        _ ->
+          false
+      end
   end.
 
