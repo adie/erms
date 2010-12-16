@@ -9,16 +9,16 @@ list_to_json(Groups) ->
   lists:map(fun(G) -> groups:to_json(G) end, Groups).
 
 to_json(Group) ->
-  {group, [
+  [{group, [
       {id, groups:id(Group)},
       {name, groups:name(Group)}
-  ]}.
+  ]}].
 
 to_json_with_users(Group) ->
   Users = users:list_to_json(users_groups:find({group_id, '=', groups:id(Group)})),
-  {group, [
+  [{group, [
       {id, groups:id(Group)},
       {name, groups:name(Group)},
       {users, Users}
-  ]}.
+  ]}].
 

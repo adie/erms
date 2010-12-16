@@ -68,7 +68,7 @@ handle_call({get_folder, Id, User}, _From, State) ->
   end,
   Result = case Folder of
       undefined ->
-        {error, list_to_binary("Can't find folder with id "++integer_to_list(Id))};
+        {error, list_to_binary(lists:concat(["Can't find folder with id ", Id]))};
       _ ->
         UserGroups = users_groups:find({user_id, '=', users:id(User)}),
         GroupIds = lists:map(fun(G) -> users_groups:group_id(G) end, UserGroups),
@@ -111,7 +111,7 @@ handle_call({get_document, Id}, _From, State) ->
   Result = case
     document:find_id(Id) of
       undefined ->
-        {error, list_to_binary("Can't find document with id "++integer_to_list(Id))};
+        {error, list_to_binary(lists:concat(["Can't find document with id ", Id]))};
       Doc ->
         File = binary_to_list(document:file_path(Doc)),
         {ok, Binary} = file:read_file(File),

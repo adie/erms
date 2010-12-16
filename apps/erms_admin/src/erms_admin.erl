@@ -67,7 +67,7 @@ handle_call({list_users}, _From, State) ->
 handle_call({get_user, Id}, _From, State) ->
   Result = case users:find_id(Id) of
     undefined ->
-      {error, list_to_binary("Can't find user with id "++integer_to_list(Id))};
+      {error, list_to_binary(lists:concat(["Can't find user with id ", Id]))};
     User ->
       {response, users:to_json_with_groups(User)}
   end,
@@ -84,13 +84,15 @@ handle_call({create_user, Args}, _From, State) ->
 handle_call({update_user, Id, Args}, _From, State) ->
   Result = case users:find_id(Id) of
     undefined ->
-      {error, list_to_binary("Can't find user with id "++integer_to_list(Id))};
+      {error, list_to_binary(lists:concat(["Can't find user with id ", Id]))};
     User ->
-      Login = proplists:get_value("login", Args),
-      Password = proplists:get_value("password", Args),
-      Fullname = proplists:get_value("fullname", Args),
-      Info = proplists:get_value("info", Args),
-      PasswordHash = erms_auth:hash_for(Login, Password),
+      Login = proplists:get_value("login", Args, users:login(User)),
+      PasswordHash = case proplists:get_value("password", Args) of
+        undefined -> users:password_hash(User);
+        Password -> erms_auth:hash_for(Login, Password)
+      end,
+      Fullname = proplists:get_value("fullname", Args, users:fullname(User)),
+      Info = proplists:get_value("info", Args, users:info(User)),
       NewUser = users:set_fields(User, [{login, Login}, {password_hash, PasswordHash}, {fullname, Fullname}, {info, Info}]),
       users:save(NewUser),
       {response, ok}
@@ -103,7 +105,7 @@ handle_call({list_groups}, _From, State) ->
 handle_call({get_group, Id}, _From, State) ->
   Result = case groups:find_id(Id) of
     undefined ->
-      {error, list_to_binary("Can't find group with id "++integer_to_list(Id))};
+      {error, list_to_binary(lists:concat(["Can't find group with id ", Id]))};
     Group ->
       {response, groups:to_json_with_users(Group)}
   end,
@@ -116,9 +118,9 @@ handle_call({create_group, Args}, _From, State) ->
 handle_call({update_group, Id, Args}, _From, State) ->
   Result = case groups:find_id(Id) of
     undefined ->
-      {error, list_to_binary("Can't find group with id "++integer_to_list(Id))};
+      {error, list_to_binary(lists:concat(["Can't find group with id ", Id]))};
     Group ->
-      Name = proplists:get_value("name", Args),
+      Name = proplists:get_value("name", Args, groups:name(Group)),
       NewGroup = groups:name(Group, Name),
       groups:save(NewGroup),
       {response, ok}
