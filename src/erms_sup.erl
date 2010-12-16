@@ -52,7 +52,7 @@ init([]) ->
     Sessions = {erms_session_store, {erms_session_store, start, []},
       permanent, 5000, worker, [erms_session_store]},
 
-    Processes = [Web, Srv, Core, Sessions],
+    Processes = [Web, Sessions],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.

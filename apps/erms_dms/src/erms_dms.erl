@@ -37,7 +37,7 @@ folder('GET', _Request, [Id], _Args, User) ->
   gen_server:call(?SNAME, {get_folder, Id, User});
 folder('POST', Request, [], Args, User) ->
   folder('POST', Request, [0], Args, User);
-folder('POST', Request, [Id], Args, User) ->
+folder('POST', _Request, [Id], Args, User) ->
   gen_server:call(?SNAME, {create_folder, Id, Args, User});
 folder(_,_,_,_,_) -> ok.
 
@@ -70,19 +70,33 @@ handle_call({get_folder, Id, User}, _From, State) ->
       undefined ->
         {error, list_to_binary("Can't find folder with id "++integer_to_list(Id))};
       _ ->
-        Folders = lists:map(
-          fun(F) ->
-              {folder, [{id, doc_folder:id(F)}, {name, doc_folder:name(F)}]}
-          end,
-          doc_folder:find({parent_folder_id, '=', Id})
-        ),
-        Documents = lists:map(
-          fun(Doc) ->
-              {document, [{id, document:id(Doc)}, {name, document:name(Doc)}, {filename, document:filename(Doc)}]}
-          end,
-          document:find({doc_folder_id, '=', Id})
-        ),
-        {response, [{folder, [{name, doc_folder:name(Folder)}]}, {subfolders, Folders}, {documents, Documents}]}
+        UserGroups = users_groups:find({user_id, '=', users:id(User)}),
+        GroupIds = lists:map(fun(G) -> users_groups:group_id(G) end, UserGroups),
+        FolderGroups = doc_folder_groups:find({doc_folder_id, '=', Id}),
+        case compare_groups(GroupIds, FolderGroups) of
+          false ->
+            {error, <<"Permission denied accessing folder">>};
+          true  ->
+            Folders = lists:map(
+              fun(F) ->
+                {folder, [{id, doc_folder:id(F)}, {name, doc_folder:name(F)}]}
+              end,
+              lists:filter(
+                fun(F) ->
+                  FGroups = doc_folder_groups:find({doc_folder_id, '=', doc_folder:id(F)}),
+                  compare_groups(GroupIds, FGroups)
+                end,
+                doc_folder:find({parent_folder_id, '=', Id})
+              )
+            ),
+            Documents = lists:map(
+              fun(Doc) ->
+                  {document, [{id, document:id(Doc)}, {name, document:name(Doc)}, {filename, document:filename(Doc)}]}
+              end,
+              document:find({doc_folder_id, '=', Id})
+            ),
+            {response, [{folder, [{name, doc_folder:name(Folder)}]}, {subfolders, Folders}, {documents, Documents}]}
+        end
   end,
   {reply, Result, State};
 
@@ -134,4 +148,13 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+compare_groups(_GroupIds, FolderGroups) when length(FolderGroups) == 0 ->
+  true;
+compare_groups(GroupIds, FolderGroups) ->
+  lists:any(
+    fun(FG) ->
+        lists:member(doc_folder_groups:group_id(FG), [0|GroupIds])
+    end, FolderGroups
+  ).
 

@@ -1,0 +1,12 @@
+%% -*- erlang -*-
+%% ex: ft=erlang et
+{application, erms_admin,
+ [{description, "erms administrative app"},
+    {vsn, "0.0.1"},
+    {modules, [erms_admin, erms_admin_app, erms_admin_sup]},
+    {registered, [erms_admin]},
+    {mod, {erms_admin_app, []}},
+    {applications, [kernel, stdlib, sasl]},
+    {env, []}
+]}.
+

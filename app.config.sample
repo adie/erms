@@ -10,6 +10,8 @@
     ]},
     {modules, [
       erms_db,
+      erms_auth,
+      erms_admin,
       erms_dms
     ]}
   ]},

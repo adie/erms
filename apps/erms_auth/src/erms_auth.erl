@@ -42,7 +42,7 @@ hash_for(Name, Password) ->
 
 init(Args) ->
   process_flag(trap_exit, true),
-  erms_db:code_gen([users]),
+  erms_db:code_gen([users, groups, users_groups]),
   {ok, Args}.
 
 handle_call({check_password, Login, Password}, _From, State) ->
