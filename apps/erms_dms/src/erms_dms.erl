@@ -79,7 +79,7 @@ handle_call({get_folder, Id, User}, _From, State) ->
           true  ->
             Folders = lists:map(
               fun(F) ->
-                {folder, [{id, doc_folder:id(F)}, {name, doc_folder:name(F)}]}
+                  [{folder, [{id, doc_folder:id(F)}, {name, doc_folder:name(F)}]}]
               end,
               lists:filter(
                 fun(F) ->
@@ -91,7 +91,7 @@ handle_call({get_folder, Id, User}, _From, State) ->
             ),
             Documents = lists:map(
               fun(Doc) ->
-                  {document, [{id, document:id(Doc)}, {name, document:name(Doc)}, {filename, document:filename(Doc)}]}
+                  [{document, [{id, document:id(Doc)}, {name, document:name(Doc)}, {filename, document:filename(Doc)}]}]
               end,
               document:find({doc_folder_id, '=', Id})
             ),

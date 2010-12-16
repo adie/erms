@@ -6,7 +6,7 @@ fields() ->
   [id, login, password_hash, fullname, info].
 
 list_to_json(Users) ->
-  lists:map(fun(U) -> users:to_json(U) end, Users).
+  lists:map(fun(U) -> [users:to_json(U)] end, Users).
 
 to_json(User) ->
   {user, [

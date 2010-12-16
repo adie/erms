@@ -86,7 +86,7 @@ return_ok(Req, Json) ->
   return_ok(Req, [], Json).
 
 return_ok(Req, Headers, {struct, _} = Json) ->
-  Req:ok({"text/plain", Headers, mochijson2:encode(Json) });
+  Req:ok({"text/json", Headers, mochijson2:encode(Json) });
 return_ok(Req, Headers, Message) ->
   return_ok(Req, Headers, {struct, [{message, Message}]}).
 
