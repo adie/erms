@@ -69,7 +69,7 @@ handle_call({get_user, Id}, _From, State) ->
     undefined ->
       {error, list_to_binary("Can't find user with id "++integer_to_list(Id))};
     User ->
-      {response, users:to_json(User)}
+      {response, users:to_json_with_groups(User)}
   end,
   {reply, Result, State};
 handle_call({create_user, Args}, _From, State) ->
@@ -105,7 +105,7 @@ handle_call({get_group, Id}, _From, State) ->
     undefined ->
       {error, list_to_binary("Can't find group with id "++integer_to_list(Id))};
     Group ->
-      {response, groups:to_json(Group)}
+      {response, groups:to_json_with_users(Group)}
   end,
   {reply, Result, State};
 handle_call({create_group, Args}, _From, State) ->
