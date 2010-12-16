@@ -56,7 +56,7 @@ init([]) ->
   process_flag(trap_exit, true),
   {ok, Storage} = application:get_env(erms_dms, file_storage),
   file:make_dir(Storage),
-  erms_db:code_gen([doc_folder, document]),
+  erms_db:code_gen([doc_folder, document, doc_folder_groups]),
   {ok, #state{file_storage=Storage}}.
 
 handle_call({get_folder, Id, User}, _From, State) ->
@@ -64,7 +64,7 @@ handle_call({get_folder, Id, User}, _From, State) ->
     0 ->
       root;
     _ ->
-      doc_folder:find_id(Id)
+      doc_folder:name(doc_folder:find_id(Id))
   end,
   Result = case Folder of
       undefined ->
@@ -95,7 +95,7 @@ handle_call({get_folder, Id, User}, _From, State) ->
               end,
               document:find({doc_folder_id, '=', Id})
             ),
-            {response, [{folder, [{name, doc_folder:name(Folder)}]}, {subfolders, Folders}, {documents, Documents}]}
+            {response, [{folder, [{name, Folder}]}, {subfolders, Folders}, {documents, Documents}]}
         end
   end,
   {reply, Result, State};
