@@ -13,32 +13,33 @@
 start(Options) ->
   {DocRoot, Options1} = get_option(docroot, Options),
   Loop = fun (Req) ->
-      ?MODULE:loop(Req, DocRoot)
+    Request = simple_bridge:make_request(mochiweb_request_bridge, {Req, DocRoot}),
+    Response = simple_bridge:make_response(mochiweb_response_bridge, {Req, DocRoot}),
+    ?MODULE:loop(Request, Response)
   end,
   mochiweb_http:start([{name, ?MODULE}, {loop, Loop} | Options1]).
 
 stop() ->
   mochiweb_http:stop(?MODULE).
 
-loop(Req, DocRoot) ->
-  Request = simple_bridge:make_request(mochiweb_request_bridge, {Req, DocRoot}),
+loop(Request, Response) ->
   try
     case string:tokens(Request:path(), "/") of
       ["test" | _] ->
-        "/"++Path = Request:path(),
-        Req:serve_file(Path, DocRoot);
+        Resp1 = Response:file(Request:path()),
+        Resp1:build_response();
       Params ->
-        erms_api:process_api(Req, DocRoot, Request, Params)
+        erms_api:process_api(Request, Response, Params)
     end
-  catch
-    Type:What ->
+  catch Type:What ->
       Report = ["web request failed",
         {path, Request:path()},
         {type, Type}, {what, What},
         {trace, erlang:get_stacktrace()}],
       error_logger:error_report(Report),
-      Req:respond({500, [{"Content-Type", "text/plain"}],
-          "request failed, sorry\n"})
+      ErrResponse = Response:status_code(500),
+      ErrResponse1 = ErrResponse:data("Internal Server Error"),
+      ErrResponse1:build_response()
 end.
 
 %% Internal API
