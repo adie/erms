@@ -16,13 +16,31 @@ process_api(Request, Response, Params) ->
   Response1 = process(#context{req=Request, resp=Response}, Params),
   Response1:build_response().
 
-process(#context{resp=Response}, ["login",Login,Password]) ->
+process(#context{req=Request,resp=Response}, ["login",Login,Password]) ->
   case erms_auth:check_password(
       list_to_binary(Login),
       list_to_binary(Password)) of
     false ->
+      Log = actions_log:new(
+        calendar:universal_time(),
+        get_ip(Request), 0, "",
+        Request:uri(),
+        Request:post_params(),
+        failure,
+        "Log in failure"
+      ),
+      actions_log:save(Log),
       return_error(Response, <<"Wrong username or password">>);
     User ->
+      Log = actions_log:new(
+        calendar:universal_time(),
+        get_ip(Request), users:id(User), users:login(User),
+        "",
+        Request:post_params(),
+        success,
+        "Successfully logged in"
+      ),
+      actions_log:save(Log),
       SessionId = erms_session_store:create(users:id(User)),
       return_ok(Response, {struct, [
             {message, <<"You're logged in now">>},
@@ -54,7 +72,19 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
     expired ->
       return_error(Response, <<"Your session expired. Plase authenticate again.">>);
     UserId ->
-      process(Context, Request:request_method(), Path, Params, SessionId, users:find_id(UserId))
+      User = users:find_id(UserId),
+      Resp = process(Context, Request:request_method(), Path, Params, SessionId, User),
+      {_,_,_,{response,200,_,_,{data, Data}}} = Resp,
+      Log = actions_log:new(
+        calendar:universal_time(),
+        get_ip(Request), users:id(User), users:login(User),
+        Request:path(),
+        Request:request_body(),
+        success,
+        Data
+      ),
+      actions_log:save(Log),
+      Resp
   end.
 
 process(Context, 'HEAD', Path, Params, SessionId, User) ->
@@ -90,6 +120,10 @@ return_ok(Response, Message) ->
 
 return_error(Response, Error) ->
   return_ok(Response, {struct, [{error, Error}]}).
+
+get_ip(Request) ->
+  {Q,W,E,R} = Request:peer_ip(),
+  lists:concat([Q,".",W,".",E,".",R]).
 
 %%
 %% Tests

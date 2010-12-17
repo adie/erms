@@ -83,8 +83,10 @@ folder_groups(_,_,_,_,_,_) -> ok.
 
 init(Args) ->
   process_flag(trap_exit, true),
+  erms_db:code_gen([actions_log]),
   {ok, Args}.
 
+%%% Users
 handle_call({list_users}, _From, State) ->
   Users = users:list_to_json(users:find()),
   {reply, {response, Users}, State};
@@ -123,6 +125,7 @@ handle_call({update_user, Id, Args}, _From, State) ->
   end,
   {reply, Result, State};
 
+%%% Groups
 handle_call({list_groups}, _From, State) ->
   Groups = groups:list_to_json(groups:find()),
   {reply, {response, Groups}, State};
@@ -151,6 +154,7 @@ handle_call({update_group, Id, Args}, _From, State) ->
   end,
   {reply, Result, State};
 
+%% Users in groups
 handle_call({list_users_groups}, _From, State) ->
   Groups = users_groups:list_to_json(users_groups:find()),
   {reply, {response, Groups}, State};
@@ -170,6 +174,7 @@ handle_call({delete_users_groups, Id}, _From, State) ->
   end,
   {reply, Result, State};
 
+%%% Groups for folders
 handle_call({list_folder_groups}, _From, State) ->
   Groups = doc_folder_groups:list_to_json(doc_folder_groups:find()),
   {reply, {response, Groups}, State};
