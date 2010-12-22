@@ -81,7 +81,7 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
         Request:path(),
         Request:request_body(),
         success,
-        Data
+        "" % Data
       ),
       actions_log:save(Log),
       Resp
