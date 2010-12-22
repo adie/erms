@@ -1,5 +1,16 @@
 var session_id = '';
+var resources = [
+    ["users", "erms_admin"],
+    ["groups", "erms_admin"],
+    ["users_groups", "erms_admin"],
+    ["folder", "erms_dms"],
+    ["document", "erms_dms"],
+    ["folder_groups", "erms_admin"]
+  ];
 $(document).onReady(function() {
+    resources.each(function(el, i) {
+      $('resource').append($E('option').html(el[0]));
+      });
     $('login_button').onClick(function() {
       login = $('login').value();
       password = $('password').value();
@@ -18,15 +29,22 @@ $(document).onReady(function() {
       });
     });
     $('tester_button').onClick(function() {
-      module = $('module').value();
-      resource = $('resource').value();
-      id = $('resource_id').value();
-      method = $('method').value();
-      params = $('params').value()
+      var resource = $('resource').value();
+      var module = '';
+      for (var i = 0; i < resources.length; i++) {
+        var el = resources[i];
+        if (el[0] == resource) {
+          module = el[1];
+          break;
+        }
+      }
+      var id = $('resource_id').value();
+      var method = $('method').value();
+      var params = $('params').value()
         .split("\n")
         .merge(['session_id='+session_id])
         .join('&');
-      url = '/' + [module, resource, id].join('/');
+      var url = '/' + [module, resource, id].join('/');
       console.log("sending request to " + url + " with params: " + params);
       new Xhr(url, {
         method: method,
