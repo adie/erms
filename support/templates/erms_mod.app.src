@@ -5,7 +5,7 @@
     {vsn, "0.0.1"},
     {modules, [{{name}}, {{name}}_app, {{name}}_sup]},
     {registered, [{{name}}]},
-    {mod, {{{name}}_app, []}},
+    {mod, { {{name}}_app, []}},
     {applications, [kernel, stdlib, sasl]},
     {env, []}
 ]}.

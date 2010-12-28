@@ -6,8 +6,8 @@
 {dir, "apps/{{name}}"}.
 {dir, "apps/{{name}}/src"}.
 {file, "erms_mod_rebar.config", "apps/{{name}}/rebar.config"}.
-{file, "erms_mod.app.src", "apps/{{name}}/src/{{name}}.app.src"}.
-{file, "gen_server.erl", "apps/{{name}}/src/{{name}}.erl"}.
-{file, "erms_mod_app.erl", "apps/{{name}}/src/{{name}}_app.erl"}.
-{file, "erms_mod_sup.erl", "apps/{{name}}/src/{{name}}_sup.erl"}.
+{template, "erms_mod.app.src", "apps/{{name}}/src/{{name}}.app.src"}.
+{template, "gen_server.erl", "apps/{{name}}/src/{{name}}.erl"}.
+{template, "erms_mod_app.erl", "apps/{{name}}/src/{{name}}_app.erl"}.
+{template, "erms_mod_sup.erl", "apps/{{name}}/src/{{name}}_sup.erl"}.
 
