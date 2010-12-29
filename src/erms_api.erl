@@ -16,7 +16,9 @@ process_api(Request, Response, Params) ->
   Response1 = process(#context{req=Request, resp=Response}, Params),
   Response1:build_response().
 
-process(#context{req=Request,resp=Response}, ["login",Login,Password]) ->
+process(#context{req=Request,resp=Response}, ["login"]) ->
+  Login = proplists:get_value("username", Request:post_params()),
+  Password = proplists:get_value("password", Request:post_params()),
   case erms_auth:check_password(
       list_to_binary(Login),
       list_to_binary(Password)) of

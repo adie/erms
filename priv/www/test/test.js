@@ -14,7 +14,8 @@ $(document).onReady(function() {
     $('login_button').onClick(function() {
       login = $('login').value();
       password = $('password').value();
-      Xhr.load("/login/"+login+"/"+password, {
+      new Xhr("/login", {
+        params: {username: login, password: password },
         onSuccess: function(request) {
           var json = request.json;
           if (json.error) {
@@ -26,7 +27,7 @@ $(document).onReady(function() {
             session_id = json.session_id;
           }
         }
-      });
+      }).send();
     });
     $('tester_button').onClick(function() {
       var resource = $('resource').value();
@@ -40,7 +41,7 @@ $(document).onReady(function() {
       }
       var id = $('resource_id').value();
       var method = $('method').value();
-      var params = $('params').value()
+      var params = $('params').value().trim()
         .split("\n")
         .merge(['session_id='+session_id])
         .join('&');
