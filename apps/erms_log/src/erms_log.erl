@@ -31,13 +31,13 @@ start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
 
 log({login_failure, Request}) ->
-  gen_server:cast(?SNAME, {log, login_failure, Request});
+  gen_server:cast(?SNAME, {log, login_failure, Request, Request:request_body()});
 log({login_success, Request, User}) ->
   gen_server:cast(?SNAME, {log, login_success, Request, User});
 log({request, Request, User}) ->
-  gen_server:cast(?SNAME, {log, request, Request, User});
+  gen_server:cast(?SNAME, {log, request, Request, Request:request_body(), User});
 log({response, Request, User, Resp}) ->
-  gen_server:cast(?SNAME, {log, response, Request, User, Resp}).
+  gen_server:cast(?SNAME, {log, response, Request, Request:request_body(), User, Resp}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -51,12 +51,12 @@ init(Args) ->
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
-handle_cast({log, login_failure, Request}, State) ->
+handle_cast({log, login_failure, Request, ReqBody}, State) ->
   Log = actions_log:new(
     calendar:universal_time(),
     get_ip(Request), 0, "",
     Request:uri(),
-    Request:post_params(),
+    ReqBody,
     failure,
     "Log in failure"
   ),
@@ -66,31 +66,31 @@ handle_cast({log, login_success, Request, User}, State) ->
   Log = actions_log:new(
     calendar:universal_time(),
     get_ip(Request), users:id(User), users:login(User),
+    Request:uri(),
     "",
-    Request:post_params(),
     success,
     "Successfully logged in"
   ),
   actions_log:save(Log),
   {noreply, State};
-handle_cast({log, request, Request, User, Resp}, State) ->
+handle_cast({log, request, Request, ReqBody, User, Resp}, State) ->
   Log = actions_log:new(
     calendar:universal_time(),
     get_ip(Request), users:id(User), users:login(User),
     Request:path(),
-    Request:request_body(),
+    ReqBody,
     request,
     ""
   ),
   actions_log:save(Log),
   {noreply, State};
-handle_cast({log, response, Request, User, Resp}, State) ->
+handle_cast({log, response, Request, ReqBody, User, Resp}, State) ->
 %  {_,_,_,{response,200,_,_,{data, Data}}} = Resp,
   Log = actions_log:new(
     calendar:universal_time(),
     get_ip(Request), users:id(User), users:login(User),
     Request:path(),
-    Request:request_body(),
+    ReqBody,
     success,
     "" % Data
   ),
