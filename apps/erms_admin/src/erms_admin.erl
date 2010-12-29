@@ -83,7 +83,6 @@ folder_groups(_,_,_,_,_,_) -> ok.
 
 init(Args) ->
   process_flag(trap_exit, true),
-  erms_db:code_gen([actions_log]),
   {ok, Args}.
 
 %%% Users

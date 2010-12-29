@@ -21,26 +21,10 @@ process(#context{req=Request,resp=Response}, ["login",Login,Password]) ->
       list_to_binary(Login),
       list_to_binary(Password)) of
     false ->
-      Log = actions_log:new(
-        calendar:universal_time(),
-        get_ip(Request), 0, "",
-        Request:uri(),
-        Request:post_params(),
-        failure,
-        "Log in failure"
-      ),
-      actions_log:save(Log),
+      erms_log:log({login_failure, Request}),
       return_error(Response, <<"Wrong username or password">>);
     User ->
-      Log = actions_log:new(
-        calendar:universal_time(),
-        get_ip(Request), users:id(User), users:login(User),
-        "",
-        Request:post_params(),
-        success,
-        "Successfully logged in"
-      ),
-      actions_log:save(Log),
+      erms_log:log({login_success, Request, User}),
       SessionId = erms_session_store:create(users:id(User)),
       return_ok(Response, {struct, [
             {message, <<"You're logged in now">>},
@@ -74,16 +58,7 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
     UserId ->
       User = users:find_id(UserId),
       Resp = process(Context, Request:request_method(), Path, Params, SessionId, User),
-      {_,_,_,{response,200,_,_,{data, Data}}} = Resp,
-      Log = actions_log:new(
-        calendar:universal_time(),
-        get_ip(Request), users:id(User), users:login(User),
-        Request:path(),
-        Request:request_body(),
-        success,
-        "" % Data
-      ),
-      actions_log:save(Log),
+      erms_log:log({response, Request, User, Resp}),
       Resp
   end.
 
@@ -120,10 +95,6 @@ return_ok(Response, Message) ->
 
 return_error(Response, Error) ->
   return_ok(Response, {struct, [{error, Error}]}).
-
-get_ip(Request) ->
-  {Q,W,E,R} = Request:peer_ip(),
-  lists:concat([Q,".",W,".",E,".",R]).
 
 %%
 %% Tests

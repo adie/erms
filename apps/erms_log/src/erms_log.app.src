@@ -1,0 +1,12 @@
+%% -*- erlang -*-
+%% ex: ft=erlang et
+{application, erms_log,
+  [{description, "Module for every erms request"},
+    {vsn, "0.0.1"},
+    {modules, [erms_log, erms_log_app, erms_log_sup]},
+    {registered, [erms_log]},
+    {mod, { erms_log_app, []}},
+    {applications, [kernel, stdlib, sasl]},
+    {env, []}
+]}.
+
