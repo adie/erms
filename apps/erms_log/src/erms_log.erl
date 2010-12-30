@@ -73,7 +73,7 @@ handle_cast({log, login_success, Request, User}, State) ->
   ),
   actions_log:save(Log),
   {noreply, State};
-handle_cast({log, request, Request, ReqBody, User, Resp}, State) ->
+handle_cast({log, request, Request, ReqBody, User}, State) ->
   Log = actions_log:new(
     calendar:universal_time(),
     get_ip(Request), users:id(User), users:login(User),
@@ -85,14 +85,14 @@ handle_cast({log, request, Request, ReqBody, User, Resp}, State) ->
   actions_log:save(Log),
   {noreply, State};
 handle_cast({log, response, Request, ReqBody, User, Resp}, State) ->
-%  {_,_,_,{response,200,_,_,{data, Data}}} = Resp,
+  {_,_,_,{response,200,_,_,{data, Data}}} = Resp,
   Log = actions_log:new(
     calendar:universal_time(),
     get_ip(Request), users:id(User), users:login(User),
     Request:path(),
     ReqBody,
     success,
-    "" % Data
+    re:replace(Data, "'", "\\'", [{return, list}])
   ),
   actions_log:save(Log),
   {noreply, State};

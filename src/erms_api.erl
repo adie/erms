@@ -59,6 +59,7 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
       return_error(Response, <<"Your session expired. Plase authenticate again.">>);
     UserId ->
       User = users:find_id(UserId),
+      erms_log:log({request, Request, User}),
       Resp = process(Context, Request:request_method(), Path, Params, SessionId, User),
       erms_log:log({response, Request, User, Resp}),
       Resp
