@@ -67,10 +67,9 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
 
 process(Context, 'HEAD', Path, Params, SessionId, User) ->
   process(Context, 'GET', Path, Params, SessionId, User);
-process(#context{req=Request, resp=Response}, Method, [Module,Function|Args], Params, _SessionId, User) ->
-  M = list_to_atom(Module),
-  F = list_to_atom(Function),
-  case catch M:F(Method, Request, Args, Params, User) of
+process(#context{req=Request, resp=Response}, Method, [Resource|Args], Params, _SessionId, User) ->
+  R = list_to_atom("api_"++Resource),
+  case catch R:handle(Method, Request, Args, Params, User) of
     {'EXIT', {Error, Desc}} ->
       error_logger:error_report([Error, Desc]),
       return_error(Response, [<<"Error in API call:">>, Error]);

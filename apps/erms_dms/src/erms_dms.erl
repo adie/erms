@@ -16,7 +16,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, folder/5, document/5]).
+-export([start_link/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -30,23 +30,6 @@
 
 start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
-
-folder('GET', Request, [], Args, User) ->
-  folder('GET', Request, [0], Args, User);
-folder('GET', _Request, [Id], _Args, User) ->
-  gen_server:call(?SNAME, {get_folder, Id, User});
-folder('POST', Request, [], Args, User) ->
-  folder('POST', Request, [0], Args, User);
-folder('POST', _Request, [Id], Args, User) ->
-  gen_server:call(?SNAME, {create_folder, Id, Args, User});
-folder(_,_,_,_,_) -> ok.
-
-document('GET', _Request, [Id], _Args, _User) ->
-  gen_server:call(?SNAME, {get_document, Id});
-document('POST', Request, [], Args, User) ->
-  [File|_] = Request:post_files(),
-  gen_server:call(?SNAME, {create_document, Args, File, User});
-document(_,_,_,_,_) -> ok.
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
