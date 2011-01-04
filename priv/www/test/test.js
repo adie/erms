@@ -3,9 +3,9 @@ var resources = [
     "users",
     "groups",
     "users_groups",
-    "folder",
-    "document",
-    "folder_groups",
+    "folders",
+    "documents",
+    "folders_groups",
   ];
 $(document).onReady(function() {
     resources.each(function(el, i) {
