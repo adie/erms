@@ -47,36 +47,36 @@ handle_call({get_folder, Id, User}, _From, State) ->
     0 ->
       root;
     _ ->
-      doc_folder:name(doc_folder:find_id(Id))
+      q(doc_folder, name, q(doc_folder, find_id, Id))
   end,
   Result = case Folder of
       undefined ->
         {error, list_to_binary(lists:concat(["Can't find folder with id ", Id]))};
       _ ->
-        UserGroups = users_groups:find({user_id, '=', users:id(User)}),
-        GroupIds = lists:map(fun(G) -> users_groups:group_id(G) end, UserGroups),
-        FolderGroups = doc_folder_groups:find({doc_folder_id, '=', Id}),
+        UserGroups = q(users_groups, find, {user_id, '=', q(users, id, User)}),
+        GroupIds = lists:map(fun(G) -> q(users_groups, group_id, G) end, UserGroups),
+        FolderGroups = q(doc_folder_groups, find, {doc_folder_id, '=', Id}),
         case compare_groups(GroupIds, FolderGroups) of
           false ->
             {error, <<"Permission denied accessing folder">>};
           true  ->
             Folders = lists:map(
               fun(F) ->
-                  [{folder, [{id, doc_folder:id(F)}, {name, doc_folder:name(F)}]}]
+                  [{folder, [{id, q(doc_folder, id, F)}, {name, q(doc_folder, name, F)}]}]
               end,
               lists:filter(
                 fun(F) ->
-                  FGroups = doc_folder_groups:find({doc_folder_id, '=', doc_folder:id(F)}),
+                  FGroups = q(doc_folder_groups, find, {doc_folder_id, '=', q(doc_folder, id, F)}),
                   compare_groups(GroupIds, FGroups)
                 end,
-                doc_folder:find({parent_folder_id, '=', Id})
+                q(doc_folder, find, {parent_folder_id, '=', Id})
               )
             ),
             Documents = lists:map(
               fun(Doc) ->
-                  [{document, [{id, document:id(Doc)}, {name, document:name(Doc)}, {filename, document:filename(Doc)}]}]
+                  [{document, [{id, q(document, id, Doc)}, {name, q(document, name, Doc)}, {filename, q(document, filename, Doc)}]}]
               end,
-              document:find({doc_folder_id, '=', Id})
+              q(document, find, {doc_folder_id, '=', Id})
             ),
             {response, [{folder, [{name, Folder}]}, {subfolders, Folders}, {documents, Documents}]}
         end
@@ -86,19 +86,19 @@ handle_call({get_folder, Id, User}, _From, State) ->
 handle_call({create_folder, Id, Args, User}, _From, State) ->
   Name = proplists:get_value("name", Args),
   Now = calendar:universal_time(),
-  Folder = doc_folder:new(Name, Id, Now),
-  doc_folder:save(Folder),
+  Folder = q(doc_folder, new_with, [{name, Name}, {parent_folder_id, Id}, {created_at, Now}]),
+  q(doc_folder, save, Folder),
   {reply, {response, ok}, State};
 
 handle_call({get_document, Id}, _From, State) ->
   Result = case
-    document:find_id(Id) of
+    q(document, find_id, Id) of
       undefined ->
         {error, list_to_binary(lists:concat(["Can't find document with id ", Id]))};
       Doc ->
-        File = binary_to_list(document:file_path(Doc)),
+        File = binary_to_list(q(document, file_path, Doc)),
         {ok, Binary} = file:read_file(File),
-        {file, document:filename(Doc), Binary}
+        {file, q(document, filename, Doc), Binary}
     end,
   {reply, Result, State};
 
@@ -110,8 +110,17 @@ handle_call({create_document, Args, File, User}, _From, State) ->
   NewFileName = State#state.file_storage++"/"++Timestamp++"_"++Filename,
   file:rename(TempFile, NewFileName),
   Now = calendar:universal_time(),
-  Doc = document:new(Name, Filename, 0, users:id(User), Now, Now, NewFileName, Size),
-  document:save(Doc),
+  Doc = q(document, new_with, [
+      {name, Name},
+      {filename, Filename},
+      {doc_folder_id, 0},
+      {user_id, q(users, id, User)},
+      {created_at, Now},
+      {updated_at, Now},
+      {file_path, NewFileName},
+      {file_size, Size}
+    ]),
+  q(document, save, Doc),
   {reply, {response, ok}, State};
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
@@ -137,7 +146,10 @@ compare_groups(_GroupIds, FolderGroups) when length(FolderGroups) == 0 ->
 compare_groups(GroupIds, FolderGroups) ->
   lists:any(
     fun(FG) ->
-        lists:member(doc_folder_groups:group_id(FG), [0|GroupIds])
+        lists:member(q(doc_folder_groups, group_id, FG), [0|GroupIds])
     end, FolderGroups
   ).
+
+q(Model, Method, Params) ->
+  erms_db:q(Model, Method, Params).
 

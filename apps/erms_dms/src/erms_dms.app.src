@@ -3,7 +3,11 @@
 {application, erms_dms,
  [{description, "erms document management system app"},
     {vsn, "0.0.1"},
-    {modules, [erms_dms, erms_dms_app, erms_dms_sup, document]},
+    {modules, [
+        erms_dms, erms_dms_app, erms_dms_sup,
+        document, doc_folder, doc_folder_groups,
+        api_documents, api_folders
+      ]},
     {registered, [erms_dms]},
     {mod, {erms_dms_app, []}},
     {applications, [kernel, stdlib, sasl]},

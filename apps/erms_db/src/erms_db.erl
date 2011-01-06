@@ -17,7 +17,8 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start/2, code_gen/1]).
+-export([start/2]).
+-export([code_gen/1, q/2, q/3, q/4]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -35,6 +36,13 @@ start(Database, Options) ->
 code_gen(Models) ->
   gen_server:call(?SNAME, {code_gen, Models}).
 
+q(Model, Method) ->
+  gen_server:call(?SNAME, {make_query, Model, Method}).
+q(Model, Method, Params) ->
+  gen_server:call(?SNAME, {make_query, Model, Method, Params}).
+q(Model, Method, Param1, Param2) ->
+  gen_server:call(?SNAME, {make_query, Model, Method, Param1, Param2}).
+
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
@@ -48,8 +56,28 @@ handle_call({code_gen, Models}, _From, #state{db_info=DbInfo} = State) ->
   #db_info{db=Database} = DbInfo,
   Result = code_gen_internal(Models, Database),
   {reply, Result, State};
+
+handle_call({make_query, Model, Method}, From, State) ->
+  spawn_link(fun() ->
+        Result = Model:Method(),
+        gen_server:reply(From, Result)
+    end),
+  {noreply, State};
+handle_call({make_query, Model, Method, Params}, From, State) ->
+  spawn_link(fun() ->
+        Result = Model:Method(Params),
+        gen_server:reply(From, Result)
+    end),
+  {noreply, State};
+handle_call({make_query, Model, Method, Param1, Param2}, From, State) ->
+  spawn_link(fun() ->
+        Result = Model:Method(Param1, Param2),
+        gen_server:reply(From, Result)
+    end),
+  {noreply, State};
+
 handle_call(_Request, _From, State) ->
-  {noreply, ok, State}.
+  {noreply, State}.
 
 handle_cast(_Msg, State) ->
   {noreply, State}.
