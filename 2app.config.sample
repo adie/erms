@@ -1,0 +1,14 @@
+%% -*- erlang -*-
+%% ex: ft=erlang et
+[
+  {kernel, [
+    {distributed, [{erms_dist, 5000, ['erms_dev@adie-desktop', {'erms_dev2@adie-desktop'}]}]},
+    {sync_nodes_mandatory, ['erms_dev@adie-desktop']},
+    {sync_nodes_timeout, 5000}
+  ]},
+  {erms, [
+    {modules, [
+      erms_admin
+    ]}
+  ]}
+].

@@ -2,7 +2,7 @@
 %% ex: ft=erlang et
 [
   {kernel, [
-    {distributed, [{erms, 5000, ['erms_dev@adie-desktop']}]},
+    {distributed, [{erms_dist, 5000, ['erms_dev@adie-desktop']}]},
     {sync_nodes_timeout, 5000}
   ]},
   {erms, [
@@ -15,7 +15,8 @@
       erms_log,
       erms_auth,
       erms_admin,
-      erms_dms
+      erms_dms,
+      erms
     ]}
   ]},
   {erms_db, [

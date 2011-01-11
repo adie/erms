@@ -29,9 +29,7 @@ start() ->
 
     application:load(erms),
     {ok, Modules} = application:get_env(erms, modules),
-    ensure_started_all(Modules),
-
-    application:start(erms).
+    ensure_started_all(Modules).
 
 %% @spec stop() -> ok
 %% @doc Stop the erms server.

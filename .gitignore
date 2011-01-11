@@ -6,6 +6,6 @@ docs
 deps/*
 erl_crash.dump
 *~
-app.config
+*app.config
 /dms_files
 /scratch
