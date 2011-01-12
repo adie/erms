@@ -16,6 +16,7 @@ process_api(Request, Response, Params) ->
   Response1 = process(#context{req=Request, resp=Response}, Params),
   Response1:build_response().
 
+% Process login request
 process(#context{req=Request,resp=Response}, ["login"]) ->
   Login = proplists:get_value("username", Request:post_params()),
   Password = proplists:get_value("password", Request:post_params()),
@@ -47,6 +48,7 @@ process(#context{req=Request,resp=Response}=Context, Path) ->
       process(Context, Path, Params, SessionId)
   end.
 
+% Process logout request
 process(#context{resp=Response}, ["logout"], _Params, SessionId) ->
   erms_session_store:destroy(SessionId),
   return_ok(Response, <<"You have logged out">>);
@@ -65,8 +67,7 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
       Resp
   end.
 
-process(Context, 'HEAD', Path, Params, SessionId, User) ->
-  process(Context, 'GET', Path, Params, SessionId, User);
+% Execute requested operation
 process(#context{req=Request, resp=Response}, Method, [Resource|Args], Params, _SessionId, User) ->
   R = list_to_atom("api_"++Resource),
   case catch R:handle(Method, Request, Args, Params, User) of

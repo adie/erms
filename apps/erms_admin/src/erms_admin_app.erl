@@ -8,17 +8,10 @@
 
 -behaviour(application).
 -export([start/2, stop/1]).
--export([start/0, stop/0]).
 
 start(_Type, _StartArgs) ->
   erms_admin_sup:start_link().
 
 stop(_State) ->
   ok.
-
-start() ->
-  application:start(erms_admin).
-
-stop() ->
-  application:stop(erms_admin).
 
