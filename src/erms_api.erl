@@ -28,7 +28,7 @@ process(#context{req=Request,resp=Response}, ["login"]) ->
       return_error(Response, <<"Wrong username or password">>);
     User ->
       erms_log:log({login_success, Request, User}),
-      SessionId = erms_session_store:create(users:id(User)),
+      SessionId = erms_session_store:create(erms_db:q(users,id,User)),
       return_ok(Response, {struct, [
             {message, <<"You're logged in now">>},
             {session_id, list_to_binary(SessionId)}
@@ -60,7 +60,7 @@ process(#context{req=Request,resp=Response}=Context, Path, Params, SessionId) ->
     expired ->
       return_error(Response, <<"Your session expired. Plase authenticate again.">>);
     UserId ->
-      User = users:find_id(UserId),
+      User = erms_db:q(users,find_id,UserId),
       erms_log:log({request, Request, User}),
       Resp = process(Context, Request:request_method(), Path, Params, SessionId, User),
       erms_log:log({response, Request, User, Resp}),

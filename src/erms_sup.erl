@@ -43,12 +43,6 @@ upgrade() ->
 init([]) ->
     Web = web_specs(erms_web, 8080),
 
-    Srv = {erms_server, {erms_server, start, [erms_server]},
-      permanent, brutal_kill, worker, [erms_server]},
-
-    Core = {erms_core, {erms_core, start_link, []},
-      permanent, 5000, worker, [erms_core]},
-
     Sessions = {erms_session_store, {erms_session_store, start, []},
       permanent, 5000, worker, [erms_session_store]},
 
