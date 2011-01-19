@@ -1,5 +1,5 @@
 %% @author Anton Dieterle <antondie@gmail.com>
-%% @copyright 2010 Anton Dieterle <antondie@gmail.com>
+%% @copyright 2011 Anton Dieterle <antondie@gmail.com>
 
 %% @doc API handling for erms.
 
@@ -106,3 +106,4 @@ return_error(Response, Error) ->
 -include_lib("eunit/include/eunit.hrl").
 
 -endif.
+

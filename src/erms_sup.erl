@@ -1,10 +1,12 @@
 %% @author Mochi Media <dev@mochimedia.com>
-%% @copyright 2010 Mochi Media <dev@mochimedia.com>
+%% @author Anton Dieterle <antondie@gmail.com>
+%% @copyright 2010 Anton Dieterle <antondie@gmail.com>
 
 %% @doc Supervisor for the erms application.
 
 -module(erms_sup).
 -author("Mochi Media <dev@mochimedia.com>").
+-author("Anton Dieterle <antondie@gmail.com>").
 
 -behaviour(supervisor).
 
@@ -41,22 +43,5 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Web = web_specs(erms_web, 8080),
-
-    Sessions = {erms_session_store, {erms_session_store, start, []},
-      permanent, 5000, worker, [erms_session_store]},
-
-    Processes = [Web, Sessions],
-    Strategy = {one_for_one, 10, 10},
-    {ok,
-     {Strategy, lists:flatten(Processes)}}.
-
-web_specs(Mod, Port) ->
-    WebConfig = [{ip, {0,0,0,0}},
-                 {port, Port},
-                 {docroot, erms_deps:local_path(["priv", "www"])}],
-    {Mod,
-     {Mod, start, [WebConfig]},
-     permanent, 5000, worker, dynamic}.
-
+  {ok, {{one_for_one, 10, 10}, []}}.
 

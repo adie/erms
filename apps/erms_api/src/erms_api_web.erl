@@ -1,9 +1,9 @@
 %% @author Anton Dieterle <antondie@gmail.com>
-%% @copyright 2010 Anton Dieterle <antondie@gmail.com>
+%% @copyright 2011 Anton Dieterle <antondie@gmail.com>
 
 %% @doc Web server for erms.
 
--module(erms_web).
+-module(erms_api_web).
 -author("Anton Dieterle <antondie@gmail.com>").
 
 -export([start/1, stop/0, loop/2]).

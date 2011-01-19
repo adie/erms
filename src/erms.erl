@@ -25,9 +25,8 @@ ensure_started_all([App|Modules]) ->
 %% @doc Start the erms server.
 start() ->
     erms_deps:ensure(),
-    ensure_started(crypto),
 
-    application:load(erms),
+    application:start(erms),
     {ok, Modules} = application:get_env(erms, modules),
     ensure_started_all(Modules).
 

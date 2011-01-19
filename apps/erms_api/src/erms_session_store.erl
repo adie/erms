@@ -1,5 +1,5 @@
 %% @author Anton Dieterle <antondie@gmail.com>
-%% @copyright 2010 Anton Dieterle <antondie@gmail.com>
+%% @copyright 2011 Anton Dieterle <antondie@gmail.com>
 
 %% @doc Session store for erms.
 
@@ -17,7 +17,8 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start/0, create/1, read/1, destroy/1]).
+-export([start_link/0]).
+-export([create/1, read/1, destroy/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -29,7 +30,7 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start() ->
+start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
 
 create(UserId) ->
