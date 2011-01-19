@@ -1,5 +1,5 @@
 %% @author {{author_name}}
-%% @copyright 2010 {{author_name}}
+%% @copyright {{copyright_year}} {{author_name}}
 
 %% @doc {{name}} supervisor.
 

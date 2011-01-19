@@ -1,7 +1,8 @@
 {variables, [
   {name, "my_erms_mod"},
   {author_name, "Anton Dieterle <antondie@gmail.com>"},
-  {description, "My erms module"}
+  {description, "My erms module"},
+  {copyright_year, 2011}
 ]}.
 {dir, "apps/{{name}}"}.
 {dir, "apps/{{name}}/src"}.
