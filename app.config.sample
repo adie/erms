@@ -16,7 +16,7 @@
       erms_auth,
       erms_admin,
       erms_dms,
-      erms
+      erms_api
     ]}
   ]},
   {erms_db, [
