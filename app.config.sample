@@ -14,9 +14,10 @@
       erms_db,
       erms_log,
       erms_auth,
+      erms_api,
+      erms_digsig,
       erms_admin,
-      erms_dms,
-      erms_api
+      erms_dms
     ]}
   ]},
   {erms_db, [
