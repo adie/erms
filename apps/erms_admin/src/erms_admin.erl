@@ -75,7 +75,9 @@ handle_call({update_user, Id, Args}, _From, State) ->
       end,
       Fullname = proplists:get_value("fullname", Args, q(users, fullname, User)),
       Info = proplists:get_value("info", Args, q(users, info, User)),
-      NewUser = q(users,set_fields, User, [{login, Login}, {password_hash, PasswordHash}, {fullname, Fullname}, {info, Info}]),
+      PrivKey = proplists:get_value("private_key", Args, q(users, private_key, User)),
+      PubKey = proplists:get_value("public_key", Args, q(users, public_key, User)),
+      NewUser = q(users, set_fields, User, [{login, Login}, {password_hash, PasswordHash}, {fullname, Fullname}, {info, Info}, {private_key, PrivKey}, {public_key, PubKey}]),
       q(users, save, NewUser),
       {response, ok}
   end,

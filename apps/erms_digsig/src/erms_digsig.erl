@@ -7,6 +7,8 @@
 
 -behaviour(gen_server).
 
+-include_lib("public_key/include/public_key.hrl").
+
 -define(SERVER, ?MODULE).
 -define(SNAME, {global, ?SERVER}).
 
@@ -46,7 +48,12 @@ init(Args) ->
   {ok, Args}.
 
 handle_call({sign, What, PrivateKey}, _From, State) ->
-  Signature = crypto:rsa_sign(What, PrivateKey),
+  PrivK = public_key:pem_decode(PrivateKey),
+  Mp_priv_exp = crypto:mpint(PrivK#'RSAPrivateKey'.privateExponent),
+  Mp_pub_exp  = crypto:mpint(PrivK#'RSAPrivateKey'.publicExponent),
+  Mp_mod      = crypto:mpint(PrivK#'RSAPrivateKey'.modulus),
+  Mp_data = << (byte_size(What)):32/integer-big, What/binary >>,
+  Signature = crypto:rsa_sign(Mp_data, [Mp_priv_exp, Mp_pub_exp, Mp_mod]),
   {reply, Signature, State};
 
 handle_call({verify, What, Signature, PublicKey}, _From, State) ->

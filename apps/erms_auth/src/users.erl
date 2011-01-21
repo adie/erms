@@ -3,7 +3,7 @@
 -export([fields/0, list_to_json/1, to_json/1, to_json_with_groups/1]).
 
 fields() ->
-  [id, login, password_hash, fullname, info].
+  [id, login, password_hash, fullname, info, private_key, public_key].
 
 list_to_json(Users) ->
   lists:map(fun(U) -> users:to_json(U) end, Users).
