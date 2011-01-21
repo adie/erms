@@ -68,7 +68,7 @@ handle_call({update_user, Id, Args}, _From, State) ->
     undefined ->
       {error, list_to_binary(lists:concat(["Can't find user with id ", Id]))};
     User ->
-      Login = proplists:get_value("login", Args, users:login(User)),
+      Login = proplists:get_value("login", Args, q(users, login, User)),
       PasswordHash = case proplists:get_value("password", Args) of
         undefined -> q(users, password_hash, User);
         Password -> erms_auth:hash_for(Login, Password)
