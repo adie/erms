@@ -10,6 +10,7 @@
 -export([start/2, stop/1]).
 
 start(_Type, _StartArgs) ->
+  erms:ensure_started([crypto, erms_auth, erms_log]),
   erms_api_sup:start_link().
 
 stop(_State) ->

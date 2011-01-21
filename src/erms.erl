@@ -6,7 +6,13 @@
 -module(erms).
 -author("Mochi Media <dev@mochimedia.com>").
 -export([start/0, stop/0]).
+-export([ensure_started/1]).
 
+ensure_started([]) ->
+  ok;
+ensure_started([App|Modules]) ->
+  ensure_started(App),
+  ensure_started(Modules);
 ensure_started(App) ->
     case application:start(App) of
         ok ->
@@ -15,20 +21,15 @@ ensure_started(App) ->
             ok
     end.
 
-ensure_started_all([]) ->
-  ok;
-ensure_started_all([App|Modules]) ->
-  ensure_started(App),
-  ensure_started_all(Modules).
-
 %% @spec start() -> ok
 %% @doc Start the erms server.
 start() ->
     erms_deps:ensure(),
 
     application:start(erms),
+
     {ok, Modules} = application:get_env(erms, modules),
-    ensure_started_all(Modules).
+    ensure_started(Modules).
 
 %% @spec stop() -> ok
 %% @doc Stop the erms server.

@@ -10,6 +10,7 @@
 -export([start/2, stop/1]).
 
 start(_Type, _StartArgs) ->
+  erms:ensure_started([erms_db, erms_digsig]),
   erms_dms_sup:start_link().
 
 stop(_State) ->
