@@ -6,6 +6,7 @@ var resources = [
     "folders",
     "documents",
     "folders_groups",
+    "dfserver"
   ];
 $(document).onReady(function() {
     resources.each(function(el, i) {
@@ -39,12 +40,14 @@ $(document).onReady(function() {
         .join('&');
       var url = '/' + [resource, id].join('/');
       console.log("sending request to " + url + " with params: " + params);
+      var starttime = new Date().getTime();
       new Xhr(url, {
         method: method,
         params: params,
         onSuccess: function(req) {
-          json = req.json;
-          if (json) {
+          $('time').html((new Date().getTime() - starttime) + "ms");
+          if (req.json) {
+            json = req.json;
             if (json.error) {
               $('answer').html("Error! " + json.error);
             } else if (json.response) {
@@ -53,8 +56,10 @@ $(document).onReady(function() {
               $('answer').html(objectString);
               console.log(json.response);
             }
-          } else if (this.getHeader('Content-Disposition').startsWith("attachment")) {
+          } else if (this.getHeader('Content-Disposition')) {
             $('answer').html('received file: <a href="'+this.url+'?session_id='+session_id+'">download</a>');
+          } else {
+            $('answer').html(this.text.split('<').join('&lt;').split('>').join("&gt;\n"));
           }
         }
       }).send();

@@ -78,6 +78,9 @@ process(#context{req=Request, resp=Response}, Method, [Resource|Args], Params, _
       return_error(Response, [Error]);
     {response, ApiResponse} ->
       return_ok(Response, {struct, [{response, ApiResponse}]});
+    {xml, Xml} ->
+      Resp1 = Response:header("Content-Type", "application/xml"),
+      Resp1:data(Xml);
     {file, Filename, Binary} ->
       Resp1 = Response:header(
         "Content-Disposition",
