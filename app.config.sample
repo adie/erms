@@ -16,6 +16,7 @@
       erms_auth,
       erms_api,
       erms_digsig,
+      erms_crypto,
       erms_admin,
       erms_dms
     ]}
