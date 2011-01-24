@@ -1,0 +1,12 @@
+%% -*- erlang -*-
+%% ex: ft=erlang et
+{application, erms_crypto,
+  [{description, "Encryption/decryption erms module"},
+    {vsn, "0.0.1"},
+    {modules, [erms_crypto, erms_crypto_app, erms_crypto_sup]},
+    {registered, [erms_crypto]},
+    {mod, { erms_crypto_app, []}},
+    {applications, [kernel, stdlib, sasl]},
+    {env, []}
+]}.
+
