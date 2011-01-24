@@ -7,8 +7,6 @@
 
 -behaviour(gen_server).
 
--include_lib("public_key/include/public_key.hrl").
-
 -define(SERVER, ?MODULE).
 -define(SNAME, {global, ?SERVER}).
 
@@ -29,12 +27,18 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-include("../../lib/key_converter.erl").
+
 start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
 
+sign(What, PrivateKey) when is_list(What) ->
+  sign(list_to_binary(What), PrivateKey);
 sign(What, PrivateKey) ->
   gen_server:call(?SNAME, {sign, What, PrivateKey}).
 
+verify(What, Signature, PublicKey) when is_list(What) ->
+  verify(list_to_binary(What), Signature, PublicKey);
 verify(What, Signature, PublicKey) ->
   gen_server:call(?SNAME, {verify, What, Signature, PublicKey}).
 
@@ -48,16 +52,13 @@ init(Args) ->
   {ok, Args}.
 
 handle_call({sign, What, PrivateKey}, _From, State) ->
-  PrivK = public_key:pem_decode(PrivateKey),
-  Mp_priv_exp = crypto:mpint(PrivK#'RSAPrivateKey'.privateExponent),
-  Mp_pub_exp  = crypto:mpint(PrivK#'RSAPrivateKey'.publicExponent),
-  Mp_mod      = crypto:mpint(PrivK#'RSAPrivateKey'.modulus),
-  Mp_data = << (byte_size(What)):32/integer-big, What/binary >>,
-  Signature = crypto:rsa_sign(Mp_data, [Mp_priv_exp, Mp_pub_exp, Mp_mod]),
+  Key = read_rsa_private_key(PrivateKey),
+  Signature = public_key:sign(What, sha, Key),
   {reply, Signature, State};
 
 handle_call({verify, What, Signature, PublicKey}, _From, State) ->
-  Verified = crypto:rsa_verify(What, Signature, PublicKey),
+  Key = read_rsa_public_key(PublicKey),
+  Verified = public_key:verify(What, sha, Signature, Key),
   {reply, Verified, State};
 
 handle_call(_Request, _From, State) ->
