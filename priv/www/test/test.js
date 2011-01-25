@@ -36,10 +36,16 @@ $(document).onReady(function() {
       var method = $('method').value();
       var params = $('params').value().trim()
         .split("\n")
+        .map(function(elem, i) {
+          var name = elem.split("=", 1);
+          var eqS = elem.indexOf("=");
+          var data = encodeURIComponent(elem.substr(eqS+1));
+          return [name,data].join('=');
+        })
         .merge(['session_id='+session_id])
         .join('&');
       var url = '/' + [resource, id].join('/');
-      console.log("sending request to " + url + " with params: " + params);
+      //console.log("sending request to " + url + " with params: " + params);
       var starttime = new Date().getTime();
       new Xhr(url, {
         method: method,
@@ -54,7 +60,7 @@ $(document).onReady(function() {
               objectString = Object.deepToString(json)
                 .replace(/\n/g,'<br/>').replace(/ /g, '&nbsp;');
               $('answer').html(objectString);
-              console.log(json.response);
+              //console.log(json.response);
             }
           } else if (this.getHeader('Content-Disposition')) {
             $('answer').html('received file: <a href="'+this.url+'?session_id='+session_id+'">download</a>');
@@ -86,3 +92,4 @@ $ext(Object, {
     return "{\n" + indent + tokens.join(",\n" + indent) + "\n"+indent+"}";
   }
 }, true);
+
