@@ -6,6 +6,8 @@ var resources = [
     "folders",
     "documents",
     "folders_groups",
+    "digsig",
+    "crypto",
     "dfserver"
   ];
 $(document).onReady(function() {
