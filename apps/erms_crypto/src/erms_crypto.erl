@@ -30,27 +30,30 @@
 -include("../../lib/key_converter.erl").
 
 start_link() ->
-  gen_server:start_link(?SNAME, ?MODULE, [], []).
+  gen_server:start_link(?MODULE, [], []).
 
 encrypt_private(What, Key) when is_list(What) ->
   encrypt_private(list_to_binary(What), Key);
 encrypt_private(What, Key) ->
-  gen_server:call(?SNAME, {encrypt_private, What, Key}).
+  gen_server:call(server_pid(), {encrypt_private, What, Key}).
 
 encrypt_public(What, Key) when is_list(What) ->
   encrypt_public(list_to_binary(What), Key);
 encrypt_public(What, Key) ->
-  gen_server:call(?SNAME, {encrypt_public, What, Key}).
+  gen_server:call(server_pid(), {encrypt_public, What, Key}).
 
 decrypt_private(What, Key) when is_list(What) ->
   decrypt_private(list_to_binary(What), Key);
 decrypt_private(What, Key) ->
-  gen_server:call(?SNAME, {decrypt_private, What, Key}).
+  gen_server:call(server_pid(), {decrypt_private, What, Key}).
 
 decrypt_public(What, Key) when is_list(What) ->
   decrypt_public(list_to_binary(What), Key);
 decrypt_public(What, Key) ->
-  gen_server:call(?SNAME, {decrypt_public, What, Key}).
+  gen_server:call(server_pid(), {decrypt_public, What, Key}).
+
+server_pid() ->
+  pg2:get_closest_pid(?MODULE).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -58,6 +61,7 @@ decrypt_public(What, Key) ->
 
 init(Args) ->
   process_flag(trap_exit, true),
+  pg2:join(?MODULE, self()),
   {ok, Args}.
 
 handle_call({encrypt_private, What, Key}, _From, State) ->

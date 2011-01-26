@@ -11,7 +11,10 @@
 
 start(_Type, _StartArgs) ->
   erms:ensure_started([crypto, public_key]),
-  erms_crypto_sup:start_link().
+  pg2:create(erms_crypto),
+  {ok, Pid} = erms_crypto_sup:start_link(),
+  supervisor:start_child(Pid, []),
+  supervisor:start_child(Pid, []).
 
 stop(_State) ->
   ok.

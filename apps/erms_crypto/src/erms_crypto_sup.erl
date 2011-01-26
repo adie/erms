@@ -43,7 +43,7 @@ upgrade() ->
 init([]) ->
   Spec = specs(erms_crypto),
   Processes = [Spec],
-  Strategy = {one_for_one, 10, 10},
+  Strategy = {simple_one_for_one, 10, 10},
   {ok,
     {Strategy, lists:flatten(Processes)}}.
 
