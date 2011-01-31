@@ -35,22 +35,22 @@ start_link() ->
 encrypt_private(What, Key) when is_list(What) ->
   encrypt_private(list_to_binary(What), Key);
 encrypt_private(What, Key) ->
-  gen_server:call(server_pid(), {encrypt_private, What, Key}).
+  gen_server:call(server_pid(), {encrypt_private, What, Key}, infinity).
 
 encrypt_public(What, Key) when is_list(What) ->
   encrypt_public(list_to_binary(What), Key);
 encrypt_public(What, Key) ->
-  gen_server:call(server_pid(), {encrypt_public, What, Key}).
+  gen_server:call(server_pid(), {encrypt_public, What, Key}, infinity).
 
 decrypt_private(What, Key) when is_list(What) ->
   decrypt_private(list_to_binary(What), Key);
 decrypt_private(What, Key) ->
-  gen_server:call(server_pid(), {decrypt_private, What, Key}).
+  gen_server:call(server_pid(), {decrypt_private, What, Key}, infinity).
 
 decrypt_public(What, Key) when is_list(What) ->
   decrypt_public(list_to_binary(What), Key);
 decrypt_public(What, Key) ->
-  gen_server:call(server_pid(), {decrypt_public, What, Key}).
+  gen_server:call(server_pid(), {decrypt_public, What, Key}, infinity).
 
 server_pid() ->
   pg2:get_closest_pid(?MODULE).
@@ -70,12 +70,12 @@ handle_call({encrypt_private, What, Key}, _From, State) ->
   {reply, Cipher, State};
 handle_call({encrypt_public, What, Key}, _From, State) ->
   PKey = read_rsa_public_key(Key),
-  Cipher = public_key:encrypt_public(What, PKey),
+  Cipher = stream_encrypt_public(What, PKey),
   {reply, Cipher, State};
 
 handle_call({decrypt_private, What, Key}, _From, State) ->
   PKey = read_rsa_private_key(Key),
-  Source = public_key:decrypt_private(What, PKey),
+  Source = stream_decrypt_private(What, PKey),
   {reply, Source, State};
 handle_call({decrypt_public, What, Key}, _From, State) ->
   PKey = read_rsa_public_key(Key),
@@ -100,4 +100,31 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+stream_encrypt_public(Bin, Key) ->
+  stream_encrypt_public(Bin, <<>>, Key).
+stream_encrypt_public(<<>>, Acc, _Key) ->
+  Acc;
+
+stream_encrypt_public(Bin, Acc, Key) when byte_size(Bin) > 50 ->
+  Data = binary_part(Bin, 0, 50),
+  Rest = binary_part(Bin, 50, byte_size(Bin)-50),
+  stream_encrypt_public(Data, Rest, Acc, Key);
+stream_encrypt_public(Bin, Acc, Key) ->
+  stream_encrypt_public(Bin, <<>>, Acc, Key).
+
+stream_encrypt_public(Data, Rest, Acc, Key) ->
+  Cipher = public_key:encrypt_public(Data, Key),
+  stream_encrypt_public(Rest, <<Acc/binary, Cipher/binary>>, Key).
+
+stream_decrypt_private(Cipher, Key) ->
+  stream_decrypt_private(Cipher, Key, <<>>).
+
+stream_decrypt_private(<<>>, _, Result) ->
+  Result;
+stream_decrypt_private(Bin, Key, Result) ->
+  Cipher = binary_part(Bin, 0, 64),
+  Rest = binary_part(Bin, 64, byte_size(Bin)-64),
+  Data = public_key:decrypt_private(Cipher, Key),
+  stream_decrypt_private(Rest, Key, <<Result/binary, Data/binary>>).
 
