@@ -8,7 +8,9 @@ var resources = [
     "folders_groups",
     "digsig",
     "crypto",
-    "dfserver"
+    "dfserver",
+    "run_test",
+    "test_results"
   ];
 $(document).onReady(function() {
     resources.each(function(el, i) {
@@ -39,38 +41,72 @@ $(document).onReady(function() {
       var params = $('params').value().trim()
         .split("\n")
         .map(function(elem, i) {
+          if (elem.blank()) {
+            return null;
+          }
           var name = elem.split("=", 1);
           var eqS = elem.indexOf("=");
           var data = encodeURIComponent(elem.substr(eqS+1));
-          return [name,data].join('=');
+          return name+'='+data;
         })
         .merge(['session_id='+session_id])
-        .join('&');
+        .compact().join('&');
       var url = '/' + [resource, id].join('/');
       //console.log("sending request to " + url + " with params: " + params);
       var starttime = new Date().getTime();
-      new Xhr(url, {
-        method: method,
-        params: params,
-        onSuccess: function(req) {
-          $('time').html((new Date().getTime() - starttime) + "ms");
-          if (req.json) {
-            json = req.json;
+      if (resource != 'test_results') {
+        new Xhr(url, {
+          method: method,
+          params: params,
+          onSuccess: function(req) {
+            $('time').html((new Date().getTime() - starttime) + "ms");
+            if (req.json) {
+              json = req.json;
+              if (json.error) {
+                $('answer').html("Error! " + json.error);
+              } else if (json.response) {
+                objectString = Object.deepToString(json)
+                  .replace(/\n/g,'<br/>').replace(/ /g, '&nbsp;');
+                $('answer').html(objectString);
+                //console.log(json.response);
+              }
+            } else if (this.getHeader('Content-Disposition')) {
+              $('answer').html('received file: <a href="'+this.url+'?session_id='+session_id+'">download</a>');
+            } else {
+              $('answer').html(this.text.split('<').join('&lt;').split('>').join("&gt;\n"));
+            }
+          },
+          onFailure: function(req) {
+            $('answer').html("Request failed");
+          }
+        }).send();
+      } else {
+        new Xhr(url, {
+          method: method,
+          params: params,
+          onSuccess: function(req) {
+            var json = req.json;
             if (json.error) {
               $('answer').html("Error! " + json.error);
             } else if (json.response) {
-              objectString = Object.deepToString(json)
-                .replace(/\n/g,'<br/>').replace(/ /g, '&nbsp;');
-              $('answer').html(objectString);
-              //console.log(json.response);
+              var results = {};
+              for (i in json.response) {
+                var l = json.response[i].log_entry;
+                if (typeof l != 'undefined') {
+                  if (typeof results[l.num] == 'undefined') {
+                    results[l.num] = {};
+                  }
+                  results[l.num][l.action] = l.time;
+                }
+              }
+              $('answer').html(results);
             }
-          } else if (this.getHeader('Content-Disposition')) {
-            $('answer').html('received file: <a href="'+this.url+'?session_id='+session_id+'">download</a>');
-          } else {
-            $('answer').html(this.text.split('<').join('&lt;').split('>').join("&gt;\n"));
+          },
+          onFailure: function(req) {
+            $('answer').html("Request failed");
           }
-        }
-      }).send();
+        }).send();
+      }
     });
 });
 

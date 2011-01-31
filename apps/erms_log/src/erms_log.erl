@@ -30,6 +30,9 @@
 start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
 
+log({test, TestId, Num, Action}) ->
+  gen_server:cast(?SNAME, {log, test, TestId, Num, Action});
+
 log({login_failure, Request}) ->
   gen_server:cast(?SNAME, {log, login_failure, Request, Request:request_body()});
 log({login_success, Request, User}) ->
@@ -51,6 +54,18 @@ init(Args) ->
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.
 
+handle_cast({log, test, TestId, Num, Action}, State) ->
+  {M, S, N} = now(),
+  Log = actions_log:new(
+    calendar:universal_time(),
+    "test", 0, "",
+    TestId,
+    Num,
+    Action,
+    lists:concat([M,S,N])
+  ),
+  actions_log:save(Log),
+  {noreply, State};
 handle_cast({log, login_failure, Request, ReqBody}, State) ->
   Log = actions_log:new(
     calendar:universal_time(),

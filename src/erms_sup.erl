@@ -43,5 +43,10 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-  {ok, {{one_for_one, 10, 10}, []}}.
+  {ok, {{one_for_one, 10, 10}, [specs(erms_df), specs(test_handler)]}}.
+
+specs(Mod) ->
+  {Mod,
+    {Mod, start_link, []},
+    permanent, 5000, worker, [Mod]}.
 
