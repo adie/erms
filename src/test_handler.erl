@@ -29,6 +29,11 @@ handle_cast({process, Iteration, Data, Signature, User, Destination}, State) ->
     erms_log:log({test, Destination, Iteration, decrypted}),
     Verified = erms_digsig:verify(Binary, Signature, PubKey),
     erms_log:log({test, Destination, Iteration, verified}),
+
+    NewSignature = erms_digsig:sign(Binary, PrivKey),
+    erms_log:log({test, Destination, Iteration, signed}),
+    NewCipher = erms_crypto:encrypt_public(Binary, PubKey),
+    erms_log:log({test, Destination, Iteration, encrypted}),
     ok
   end),
   {noreply, State};

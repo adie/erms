@@ -62,7 +62,7 @@ handle_cast({log, test, TestId, Num, Action}, State) ->
     TestId,
     Num,
     Action,
-    lists:concat([M,S,N])
+    (M*1000000000000) + (S*1000000) + N
   ),
   actions_log:save(Log),
   {noreply, State};

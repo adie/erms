@@ -90,6 +90,8 @@ $(document).onReady(function() {
               $('answer').html("Error! " + json.error);
             } else if (json.response) {
               var results = {};
+              var maxtime = 0;
+              var mintime = null;
               for (i in json.response) {
                 var l = json.response[i].log_entry;
                 if (typeof l != 'undefined') {
@@ -97,9 +99,42 @@ $(document).onReady(function() {
                     results[l.num] = {};
                   }
                   results[l.num][l.action] = l.time;
+                  if (mintime == null) {
+                    mintime = l.time;
+                  }
+                  if (l.time < mintime) {
+                    mintime = l.time;
+                  }
+                  if (l.time > maxtime) {
+                    maxtime = l.time;
+                  }
                 }
               }
-              $('answer').html(results);
+              maxtime = maxtime - mintime;
+              $('time').html(maxtime/1000 + "ms");
+              var div = $E('div', {style: {position: 'relative'}});
+              var rownum = 0;
+              var colors = ['red', 'blue', 'green', 'purple']
+              Object.each(results, function(key, result) {
+                var started_at = (result.started-mintime)*800/maxtime;
+                [result.decrypted, result.verified, result.signed, result.encrypted]
+                .reverse()
+                .each(function(t, i) {
+                  var time = (t-mintime)*800/maxtime - started_at;
+                  div.append(
+                    $E('div', {style: {
+                      position: 'absolute',
+                      'background-color': colors[i],
+                      height: '5px',
+                      'top': (rownum*6)+'px',
+                      left: started_at + 'px',
+                      width: time + 'px'
+                    }})
+                    );
+                });
+                rownum++;
+              });
+              $('answer').update(div);
             }
           },
           onFailure: function(req) {
