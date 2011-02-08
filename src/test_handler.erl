@@ -22,18 +22,18 @@ handle_call(_Msg, _From, State) ->
 
 handle_cast({process, Iteration, Data, Signature, User, Destination}, State) ->
   spawn_link(fun() ->
-    erms_log:log({test, Destination, Iteration, started}),
+    %erms_log:log({test, Destination, Iteration, started}),
     PrivKey = erms_db:q(users, private_key, User),
     PubKey = erms_db:q(users, public_key, User),
-    Binary = erms_crypto:decrypt_private(Data, PrivKey),
-    erms_log:log({test, Destination, Iteration, decrypted}),
+    Binary = erms_crypto:decrypt_private(Data, PrivKey, Iteration),
+    %erms_log:log({test, Destination, Iteration, decrypted}),
     Verified = erms_digsig:verify(Binary, Signature, PubKey),
-    erms_log:log({test, Destination, Iteration, verified}),
+    %erms_log:log({test, Destination, Iteration, verified}),
 
     NewSignature = erms_digsig:sign(Binary, PrivKey),
-    erms_log:log({test, Destination, Iteration, signed}),
-    NewCipher = erms_crypto:encrypt_public(Binary, PubKey),
-    erms_log:log({test, Destination, Iteration, encrypted}),
+    %erms_log:log({test, Destination, Iteration, signed}),
+    NewCipher = erms_crypto:encrypt_public(Binary, PubKey, Iteration),
+    %erms_log:log({test, Destination, Iteration, encrypted}),
     ok
   end),
   {noreply, State};
