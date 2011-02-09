@@ -15,7 +15,7 @@
 %% ------------------------------------------------------------------
 
 -export([start_link/0]).
--export([sign/2, sign/3, verify/3, verify/4]).
+-export([sign/2, sign/4, verify/3, verify/5]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -33,18 +33,18 @@ start_link() ->
   gen_server:start_link(?SNAME, ?MODULE, [], []).
 
 sign(What, PrivateKey) ->
-  sign(What, PrivateKey, nolog).
-sign(What, PrivateKey, Iteration) when is_list(What) ->
-  sign(list_to_binary(What), PrivateKey, Iteration);
-sign(What, PrivateKey, Iteration) ->
-  gen_server:call(?SNAME, {sign, What, PrivateKey, Iteration}).
+  sign(What, PrivateKey, nolog, []).
+sign(What, PrivateKey, Iteration, FurtherMsg) when is_list(What) ->
+  sign(list_to_binary(What), PrivateKey, Iteration, FurtherMsg);
+sign(What, PrivateKey, Iteration, FurtherMsg) ->
+  gen_server:call(?SNAME, {sign, What, PrivateKey, Iteration, FurtherMsg}).
 
 verify(What, Signature, PublicKey) ->
-  verify(What, Signature, PublicKey, nolog).
-verify(What, Signature, PublicKey, Iteration) when is_list(What) ->
-  verify(list_to_binary(What), Signature, PublicKey, Iteration);
-verify(What, Signature, PublicKey, Iteration) ->
-  gen_server:call(?SNAME, {verify, What, Signature, PublicKey, Iteration}).
+  verify(What, Signature, PublicKey, nolog, []).
+verify(What, Signature, PublicKey, Iteration, FurtherMsg) when is_list(What) ->
+  verify(list_to_binary(What), Signature, PublicKey, Iteration, FurtherMsg);
+verify(What, Signature, PublicKey, Iteration, FurtherMsg) ->
+  gen_server:call(?SNAME, {verify, What, Signature, PublicKey, Iteration, FurtherMsg}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -55,7 +55,7 @@ init(Args) ->
   crypto:start(),
   {ok, Args}.
 
-handle_call({sign, What, PrivateKey, Iteration}, _From, State) ->
+handle_call({sign, What, PrivateKey, Iteration, FurtherMsg}, _From, State) ->
   case Iteration of
     nolog -> ok;
     _ -> erms_log:log({test, "", Iteration, sign_started})
@@ -66,12 +66,19 @@ handle_call({sign, What, PrivateKey, Iteration}, _From, State) ->
     nolog -> ok;
     _ -> erms_log:log({test, "", Iteration, signed})
   end,
-  {reply, Signature, State};
+  case FurtherMsg of
+    [] -> {reply, Signature, State};
+    [{encrypt_public, PubKey}] ->
+      spawn(fun() ->
+          erms_crypto:encrypt_public(What, PubKey, Iteration)
+        end),
+      {noreply, State}
+  end;
 
-handle_call({verify, What, Signature, PublicKey, Iteration}, _From, State) ->
+handle_call({verify, What, Signature, PublicKey, Iteration, FurtherMsg}, _From, State) ->
   case Iteration of
     nolog -> ok;
-    _ -> erms_log:log({test, "", Iteration, verify_stared})
+    _ -> erms_log:log({test, "", Iteration, verify_started})
   end,
   Key = read_rsa_public_key(PublicKey),
   Verified = public_key:verify(What, sha, Signature, Key),
@@ -79,7 +86,14 @@ handle_call({verify, What, Signature, PublicKey, Iteration}, _From, State) ->
     nolog -> ok;
     _ -> erms_log:log({test, "", Iteration, verified})
   end,
-  {reply, Verified, State};
+  case FurtherMsg of
+    [] -> {reply, Verified, State};
+    [{sign, PrivKey} | NextMsg] ->
+      spawn(fun() ->
+          erms_digsig:sign(What, PrivKey, Iteration, NextMsg)
+        end),
+      {noreply, State}
+  end;
 
 handle_call(_Request, _From, State) ->
   {noreply, ok, State}.

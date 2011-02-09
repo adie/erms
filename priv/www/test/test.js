@@ -99,10 +99,11 @@ $(document).onReady(function() {
                     results[l.num] = {};
                   }
                   results[l.num][l.action] = l.time;
-                  if (mintime == null) {
+                  console.log(l.action + " - " + l.time);
+                  if (mintime == null && l.action != "started") {
                     mintime = l.time;
                   }
-                  if (l.time < mintime) {
+                  if (l.time < mintime && l.action != "started") {
                     mintime = l.time;
                   }
                   if (l.time > maxtime) {
@@ -114,7 +115,7 @@ $(document).onReady(function() {
               $('time').html(maxtime/1000 + "ms");
               var div = $E('div', {style: {position: 'relative'}});
               var rownum = 0;
-              var colors = ['red', 'gray', 'blue', 'gray', 'green', 'gray', 'purple'].reverse();
+              var colors = ['red', '#eee', 'blue', '#eee', 'green', '#eee', 'purple'].reverse();
               Object.each(results, function(key, result) {
                 var started_at = (result.decrypt_started-mintime)*800/maxtime;
                 [result.decrypted, result.verify_started, result.verified, result.sign_started, result.signed, result.encrypt_started, result.encrypted]
